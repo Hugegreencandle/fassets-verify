@@ -1,0 +1,51 @@
+{
+ "attestation_schema": "kvt.fxrp-solvency-attestation.v1",
+ "asset": "FXRP",
+ "networks": {
+  "flare_block": 65383957,
+  "xrpl_ledger": 105693670
+ },
+ "verdict": "SOLVENT",
+ "backing_verdict": "PROVEN",
+ "collateral_verdict": "OVER_COLLATERALIZED",
+ "total_supply_uba": "151675803794371",
+ "real_backing_uba": "151785496762164",
+ "surplus_uba": "109692967793",
+ "core_vault": {
+  "addr": "rfkXSaCZKTg1EZzec2rLDyrWHxRVJdtVXj",
+  "liquid_drops": "9454876021789",
+  "escrow_drops": "140000000000000"
+ },
+ "agents": 6,
+ "collateral_flags": 0,
+ "in_flight": {
+  "reservedUBA": 0,
+  "redeemingUBA": 0
+ },
+ "method": "dual-leg re-derivation from raw Flare mainnet + XRPL; no indexer, oracle, or dashboard trusted",
+ "trust_model": {
+  "provable_trustlessly": "XRPL 1:1 backing (agent + Core-Vault balances incl. on-ledger escrow, re-derived from raw XRPL, no indexer/oracle) and agent over-collateralization status (read from Flare mainnet).",
+  "conditional_trust": "FDC attestation set (mint proofs) and the marked value / release schedule of time-locked escrow.",
+  "not_claimed": "That FXRP is safe from every economic risk; this is a solvency snapshot (backing >= supply AND no agent in liquidation), not an audit of the FAssets contracts or FDC."
+ },
+ "verifier": {
+  "name": "Dane Brown",
+  "organization": "Kairo Vault Technologies (G.K.)",
+  "role": "Independent Verifier"
+ },
+ "environment": "Darwin 25.5.0, arm64; Node v24.14.0. Re-derived from live Flare + XRPL RPC at the pinned heights; no privileged access.",
+ "anchor": {
+  "body_sha256": "sha256:03d16c49e47e43cd0194a29a2df2a6b6f69d500b779c9e78133e2ece2fc0768d",
+  "chain": "xahau",
+  "memo_hint": "anchor body_sha256 + kid in a Xahau memo/Hook tx from the KVT attester account"
+ },
+ "signature": {
+  "alg": "Ed25519",
+  "domain": "kvt.attestation.v1",
+  "ctx": "por.fxrp.solvency.v1",
+  "net": "flare-mainnet+xrpl-mainnet",
+  "kid": "kvt-attester-1:82187d3e78386990",
+  "sig_b64": "cdKLIvGgWwe8zEvULpKWKIwfACZ9cdB17zRpgONF6ADr5pDkwO2QYb7IPiYn3SLDrfyEzgK1bllKif2QNyXLDg=="
+ },
+ "attested_at": "2026-07-18T23:56:16.972Z"
+}
