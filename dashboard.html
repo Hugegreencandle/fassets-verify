@@ -1,0 +1,43 @@
+<!doctype html><html><head><meta charset="utf-8"><title>FAssets Proof-of-Reserves</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#070b14;color:#c8d6e8;font:15px/1.5 -apple-system,SFMono-Regular,Menlo,monospace;padding:32px;max-width:900px;margin:0 auto}
+h1{font-size:24px;color:#5ee0ff;letter-spacing:.5px;font-weight:600}
+.sub{color:#5a6b82;font-size:12px;margin:6px 0 28px}
+.card{background:linear-gradient(160deg,#0d1524,#0a0f1c);border:1px solid #1a2740;border-radius:14px;padding:22px;margin-bottom:20px;box-shadow:0 0 40px #0af2}
+.sym{font-size:20px;color:#e6f0ff;font-weight:600}
+.badge{float:right;font-size:13px;font-weight:700;padding:5px 14px;border-radius:20px;letter-spacing:1px}
+.PROVEN{background:#0c3;color:#031;box-shadow:0 0 16px #0c36}
+.FLAGGED{background:#f44;color:#300}
+.CANNOT_VERIFY{background:#fa0;color:#310}
+.row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #12203a}
+.k{color:#7a8db0}.v{color:#e6f0ff;font-variant-numeric:tabular-nums}
+.big{font-size:19px;color:#5ee0ff}
+.escrow{background:#0a1a2e;border-left:3px solid #5ee0ff;padding:11px 14px;margin:14px 0;border-radius:6px;font-size:13px;color:#9fb8d8}
+.esc-hi{color:#5ee0ff;font-weight:700}
+.trap{color:#ffb454}
+.foot{color:#4a5a72;font-size:11px;margin-top:20px;line-height:1.7}
+</style></head><body>
+<h1>FAssets Proof-of-Reserves</h1>
+<div class="sub">Independent verification &mdash; every FAsset backed by real underlying, re-derived from raw Flare + XRPL, trusting no indexer &middot; Flare #PIN_F / XRPL #PIN_X</div>
+<div id="app"></div>
+<div class="foot">Fail-closed: PROVEN (backing &ge; supply) &middot; FLAGGED (under-backed) &middot; CANNOT_VERIFY (missing read). Reproducible: same pinned ledger &rarr; same verdict. Backing read live from the XRP Ledger incl. Escrow objects. Honest scope: proves the underlying XRP <i>exists and is on-ledger</i> at the pinned moment; the Core Vault is a custodial multisig (not trustless custody). Not an on-chain oracle.</div>
+<script>
+const D={"pinned": {"flare_block": 64455060, "xrpl_ledger": 105410916}, "assets": [{"symbol": "FXRP", "assetManager": "0x2a3Fe068cD92178554cabcf7c95ADf49B4B0B6A8", "decimals": 6, "totalSupply": 152077614321722, "agents": [{"vault": "0x8eA74D78A03F20597cEE115176f7f8b65271c87A", "addr": "rs6q5K4RrVbrymieYjx9TFzTW24Rv9BekL", "minted": 183329580499, "live": 183511967825}, {"vault": "0x09011d2A11A40DB855Cb00B3AA5a0F5F3bd485FD", "addr": "rGWGTbxqmpLJ3TYGjoCFDqY9mPQ4T1GTGb", "minted": 133330000000, "live": 229634418684}, {"vault": "0x0F6AB40fE44aA3AB15B8ff96Df98C6F5865F048E", "addr": "rGK7w4oK5x4ncCZyjYEH4QpCZSkKSMrUV2", "minted": 397668459719, "live": 403348226715}, {"vault": "0xA69bF2eC0eF91A29B5da634BD4958AA32BaD9fe3", "addr": "rEUvL6uJ1NYqa81tGxjH6BnLCQRzqT1aR7", "minted": 411414044000, "live": 413174398529}, {"vault": "0x7CeC6EC27F3A0f0a37B1847E5Af3E99A7499A0bC", "addr": "raDZBXEKsBtgcRsWjq6bg2DVRkCXknJ4Kq", "minted": 408699275706, "live": 409256385365}, {"vault": "0xe56f464c23760d563dd4c73dADA05159aE71FC50", "addr": "rU3KcE1fqgn7Qm8dA3DSnefNoUnsYF31Wr", "minted": 451156652238, "live": 455081256654}], "coreVault": {"addr": "rfkXSaCZKTg1EZzec2rLDyrWHxRVJdtVXj", "liquid": 10092379624048, "escrow": 140000000000000}, "realBacking": 152186386277820, "surplus": 108771956098, "verdict": "PROVEN"}]};
+document.querySelector(".sub").innerHTML=document.querySelector(".sub").innerHTML.replace("PIN_F",D.pinned.flare_block).replace("PIN_X",D.pinned.xrpl_ledger);
+const fmt=(n,dec)=>((Number(n)/10**dec).toLocaleString(undefined,{maximumFractionDigits:2}));
+const app=document.getElementById("app");
+D.assets.forEach(a=>{
+  const s=a.decimals, cvL=a.coreVault.liquid, cvE=a.coreVault.escrow;
+  app.insertAdjacentHTML("beforeend",`<div class="card">
+    <span class="badge ${a.verdict}">${a.verdict}</span>
+    <div class="sym">${a.symbol}</div>
+    <div class="row"><span class="k">circulating supply</span><span class="v big">${fmt(a.totalSupply,s)}</span></div>
+    <div class="row"><span class="k">real underlying backing</span><span class="v big">${fmt(a.realBacking,s)}</span></div>
+    <div class="row"><span class="k">surplus</span><span class="v">${(Number(a.surplus)/10**s>=0?"+":"")+fmt(a.surplus,s)}</span></div>
+    <div class="escrow">Core Vault: <span class="esc-hi">${fmt(cvL,6)}</span> liquid + <span class="esc-hi">${fmt(cvE,6)}</span> in XRPL <b>Escrow</b>.<br>
+      <span class="trap">&#9888; A naive account-balance check reads only ${fmt(cvL,6)} and false-flags "${fmt(cvE,6)} under-backed" &mdash; the escrow doesn't count toward Balance. This tool reads the actual Escrow objects.</span></div>
+    <div class="row"><span class="k">${a.agents.length} agent vaults</span><span class="v">${fmt(a.agents.reduce((t,x)=>t+Number(x.live||0),0),6)} XRP</span></div>
+  </div>`);
+});
+</script></body></html>

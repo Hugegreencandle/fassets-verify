@@ -1,0 +1,56 @@
+<!doctype html><meta charset=utf-8><title>FXRP Proof-of-Solvency — independent, by Kairo Vault</title>
+<style>
+:root{color-scheme:light dark}
+body{font:15px/1.5 -apple-system,system-ui,sans-serif;max-width:920px;margin:2rem auto;padding:0 1rem;color:#222;background:#fff}
+@media(prefers-color-scheme:dark){body{color:#ddd;background:#111}.asset,.leg,.honest{background:#1a1a1a;border-color:#333}th{background:#222}}
+h1{margin:0 0 .2rem}.meta{color:#888;font-size:13px;margin-bottom:1.5rem}
+.asset{border:1px solid #e3e3e3;border-radius:12px;padding:1.2rem;margin:1rem 0;background:#fafafa}
+.verdict{color:#fff;font-weight:700;font-size:1.3rem;padding:.5rem .9rem;border-radius:8px;display:inline-block;margin-bottom:1rem}
+.legs{display:flex;gap:1rem;flex-wrap:wrap}.leg{flex:1;min-width:260px;border:1px solid #e3e3e3;border-radius:10px;padding:.8rem;background:#fff}
+.leg h3{margin:.1rem 0 .4rem;font-size:1rem}.big{font-weight:700;font-size:1.1rem;margin:.2rem 0}.sub{color:#777;font-size:13px;margin:.2rem 0 0}
+.tag{font-size:11px;background:#eee;color:#555;padding:.1rem .4rem;border-radius:4px;vertical-align:middle}
+table{border-collapse:collapse;width:100%;margin:.8rem 0;font-size:13px}td,th{border:1px solid #e3e3e3;padding:.35rem .5rem;text-align:left}
+th{background:#f0f0f0;font-weight:600}.num,.nums td:last-child{text-align:right;font-variant-numeric:tabular-nums}.mono{font-family:ui-monospace,monospace;font-size:12px}
+.ok{color:#0a7;font-weight:600}.bad{color:#c33;font-weight:700}
+.honest{border:1px solid #e3e3e3;border-radius:10px;padding:.8rem;background:#fff;margin-top:1rem}.honest h3{margin:.1rem 0 .5rem}
+details summary{cursor:pointer;font-weight:600;margin:.5rem 0}.overflow{overflow-x:auto}
+footer{color:#888;font-size:12px;margin-top:2rem;border-top:1px solid #e3e3e3;padding-top:1rem}
+</style>
+<h1>FXRP — Independent Proof-of-Solvency</h1>
+<div class=meta>Verified by <b>Kairo Vault</b> (independent, no affiliation with Flare or the FAssets agents) ·
+generated 2026-07-18 23:10:45Z · pinned to <b>Flare block 65381499</b> / <b>XRPL ledger 105692927</b> ·
+re-derivable: run <span class=mono>fassets_verify.py</span> at these heights and reproduce this exact result.</div>
+<div class=overflow>
+    <section class=asset>
+      <div class=verdict style="background:#0a7">FXRP — SOLVENT</div>
+      <div class=legs>
+        <div class=leg><h3>Leg 1 — Over-collateralization <span class=tag>Flare</span></h3>
+          <p class=big>OVER_COLLATERALIZED</p>
+          <p class=sub>Read from the FAssets protocol's own AgentStatus (NORMAL / CCB / LIQUIDATION). 6 agents, 0 flagged.</p></div>
+        <div class=leg><h3>Leg 2 — XRPL 1:1 backing <span class=tag>XRPL</span></h3>
+          <p class=big>PROVEN</p>
+          <p class=sub>Real XRP re-derived from raw XRPL (agents + Core Vault, incl. on-ledger escrow). No indexer, no oracle.</p></div>
+      </div>
+      <table class=nums>
+        <tr><td>FXRP supply</td><td class=num>151,675,423.29</td></tr>
+        <tr><td>Real XRPL backing</td><td class=num>151,785,116.18</td></tr>
+        <tr><td>Surplus</td><td class=num>109,692.89 (0.072%)</td></tr>
+        <tr><td>Core Vault liquid</td><td class=num>9,454,575.52</td></tr>
+        <tr><td>Core Vault escrow (time-locked)</td><td class=num>140,000,000.00</td></tr>
+        <tr><td>In-flight (reserved / redeeming, not netted)</td><td class=num>0.00 / 0.00</td></tr>
+      </table>
+      <details open><summary>Per-agent (collateral + backing)</summary>
+        <table class=agents><tr><th>XRPL underlying addr</th><th>Status</th><th>Vault CR</th><th>Pool CR</th><th>Minted</th><th>Live XRP</th><th>Collateral</th></tr><tr><td class=mono>rs6q5K4RrVbrymieYjx9TFzTW24Rv9BekL</td><td>NORMAL</td><td class=num>212.71%</td><td class=num>206.28%</td><td class=num>425,760.13</td><td class=num>425,899.58</td><td class='ok'>HEALTHY</td></tr><tr><td class=mono>rGWGTbxqmpLJ3TYGjoCFDqY9mPQ4T1GTGb</td><td>NORMAL</td><td class=num>648.25%</td><td class=num>782.84%</td><td class=num>112,860.00</td><td class=num>210,372.61</td><td class='ok'>HEALTHY</td></tr><tr><td class=mono>rGK7w4oK5x4ncCZyjYEH4QpCZSkKSMrUV2</td><td>NORMAL</td><td class=num>266.28%</td><td class=num>232.4%</td><td class=num>341,395.17</td><td class=num>347,631.66</td><td class='ok'>HEALTHY</td></tr><tr><td class=mono>rEUvL6uJ1NYqa81tGxjH6BnLCQRzqT1aR7</td><td>NORMAL</td><td class=num>199.43%</td><td class=num>284.96%</td><td class=num>456,708.06</td><td class=num>458,572.66</td><td class='ok'>HEALTHY</td></tr><tr><td class=mono>raDZBXEKsBtgcRsWjq6bg2DVRkCXknJ4Kq</td><td>NORMAL</td><td class=num>240.54%</td><td class=num>214.23%</td><td class=num>380,176.67</td><td class=num>380,327.57</td><td class='ok'>HEALTHY</td></tr><tr><td class=mono>rU3KcE1fqgn7Qm8dA3DSnefNoUnsYF31Wr</td><td>NORMAL</td><td class=num>181.33%</td><td class=num>217.5%</td><td class=num>504,320.04</td><td class=num>507,736.58</td><td class='ok'>HEALTHY</td></tr></table>
+      </details>
+      <div class=honest>
+        <h3>What this does and does not mean</h3>
+        <p><b>Provable with no trust beyond the ledgers:</b> XRPL 1:1 backing (agent + Core-Vault balances incl. on-ledger escrow, re-derived from raw XRPL, no indexer/oracle) and agent over-collateralization status (read from Flare mainnet).</p>
+        <p><b>Conditional on named trust:</b> FDC attestation set (mint proofs) and the marked value / release schedule of time-locked escrow.</p>
+        <p><b>Not claimed:</b> That FXRP is safe from every economic risk; this is a solvency snapshot (backing &gt;= supply AND no agent in liquidation), not an audit of the FAssets contracts or FDC.</p>
+        <details><summary>Caveats (6)</summary><ul><li>POINT-IN-TIME: verdict is pinned to the block/ledger above and decays the next ledger; re-run for a current view.</li><li>IN-FLIGHT NOT NETTED: reserved=0 + redeeming=0 UBA are in 14-day mint/redeem windows; the backing check compares live XRPL balance vs total FXRP supply without netting these (conservative but not exact).</li><li>CORE-VAULT ESCROW: 140000000000000 UBA of Core-Vault backing is XRPL Escrow (time-locked); it is counted as backing but the escrow release ladder / finish conditions are NOT verified here.</li><li>FDC TRUST: the mint side of FAssets trusts Flare&#x27;s FDC attestation set for XRPL-&gt;Flare proofs; this tool re-derives balances directly from XRPL and does NOT re-verify FDC&#x27;s attestations.</li><li>CR SIGNAL: LEG 1 uses the protocol&#x27;s own AgentStatus (NORMAL/CCB/LIQUIDATION) as the authoritative liquidation signal and reports actual CRs; it does not fetch the per-collateral-type required min CR (&#x27;vs required %&#x27; is a getCollateralType enhancement).</li><li>AGENT SET: enumerated via getAllAgents(0,1000); if the system ever exceeds 1000 agents this must paginate (currently 6 agents).</li></ul></details>
+      </div>
+    </section></div>
+<footer>Independent verification, not a Flare product and not on Flare's settlement path. Both legs are re-derived from raw
+Flare mainnet + XRPL data with no indexer, oracle, or dashboard trusted. Numbers are on-chain-checkable at the pinned heights.
+This is a solvency snapshot (backing &ge; supply AND no agent in liquidation), not an audit of the FAssets contracts or of Flare's FDC.
+&mdash; Kairo Vault, the independent verification layer.</footer>

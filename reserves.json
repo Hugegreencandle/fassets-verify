@@ -1,0 +1,128 @@
+{
+  "pinned": {
+    "flare_block": 65381499,
+    "xrpl_ledger": 105692927
+  },
+  "assets": [
+    {
+      "symbol": "FXRP",
+      "assetManager": "0x2a3Fe068cD92178554cabcf7c95ADf49B4B0B6A8",
+      "decimals": 6,
+      "totalSupply": 151675423293870,
+      "agents": [
+        {
+          "vault": "0x8eA74D78A03F20597cEE115176f7f8b65271c87A",
+          "addr": "rs6q5K4RrVbrymieYjx9TFzTW24Rv9BekL",
+          "minted": 425760132032,
+          "live": 425899579577,
+          "status": "NORMAL",
+          "liquidationStart": 0,
+          "vaultCR_pct": 212.71,
+          "poolCR_pct": 206.28,
+          "mintingVaultCR_pct": 140.0,
+          "mintingPoolCR_pct": 170.0,
+          "collateral": "HEALTHY",
+          "belowMintBuffer": false
+        },
+        {
+          "vault": "0x09011d2A11A40DB855Cb00B3AA5a0F5F3bd485FD",
+          "addr": "rGWGTbxqmpLJ3TYGjoCFDqY9mPQ4T1GTGb",
+          "minted": 112860000000,
+          "live": 210372610216,
+          "status": "NORMAL",
+          "liquidationStart": 0,
+          "vaultCR_pct": 648.25,
+          "poolCR_pct": 782.84,
+          "mintingVaultCR_pct": 140.0,
+          "mintingPoolCR_pct": 170.0,
+          "collateral": "HEALTHY",
+          "belowMintBuffer": false
+        },
+        {
+          "vault": "0x0F6AB40fE44aA3AB15B8ff96Df98C6F5865F048E",
+          "addr": "rGK7w4oK5x4ncCZyjYEH4QpCZSkKSMrUV2",
+          "minted": 341395168086,
+          "live": 347631660352,
+          "status": "NORMAL",
+          "liquidationStart": 0,
+          "vaultCR_pct": 266.28,
+          "poolCR_pct": 232.4,
+          "mintingVaultCR_pct": 140.0,
+          "mintingPoolCR_pct": 170.0,
+          "collateral": "HEALTHY",
+          "belowMintBuffer": false
+        },
+        {
+          "vault": "0xA69bF2eC0eF91A29B5da634BD4958AA32BaD9fe3",
+          "addr": "rEUvL6uJ1NYqa81tGxjH6BnLCQRzqT1aR7",
+          "minted": 456708063131,
+          "live": 458572661955,
+          "status": "NORMAL",
+          "liquidationStart": 0,
+          "vaultCR_pct": 199.43,
+          "poolCR_pct": 284.96,
+          "mintingVaultCR_pct": 140.0,
+          "mintingPoolCR_pct": 200.0,
+          "collateral": "HEALTHY",
+          "belowMintBuffer": false
+        },
+        {
+          "vault": "0x7CeC6EC27F3A0f0a37B1847E5Af3E99A7499A0bC",
+          "addr": "raDZBXEKsBtgcRsWjq6bg2DVRkCXknJ4Kq",
+          "minted": 380176668384,
+          "live": 380327565585,
+          "status": "NORMAL",
+          "liquidationStart": 0,
+          "vaultCR_pct": 240.54,
+          "poolCR_pct": 214.23,
+          "mintingVaultCR_pct": 140.0,
+          "mintingPoolCR_pct": 170.0,
+          "collateral": "HEALTHY",
+          "belowMintBuffer": false
+        },
+        {
+          "vault": "0xe56f464c23760d563dd4c73dADA05159aE71FC50",
+          "addr": "rU3KcE1fqgn7Qm8dA3DSnefNoUnsYF31Wr",
+          "minted": 504320044239,
+          "live": 507736582688,
+          "status": "NORMAL",
+          "liquidationStart": 0,
+          "vaultCR_pct": 181.33,
+          "poolCR_pct": 217.5,
+          "mintingVaultCR_pct": 140.0,
+          "mintingPoolCR_pct": 170.0,
+          "collateral": "HEALTHY",
+          "belowMintBuffer": false
+        }
+      ],
+      "coreVault": {
+        "addr": "rfkXSaCZKTg1EZzec2rLDyrWHxRVJdtVXj",
+        "liquid": 9454575521286,
+        "escrow": 140000000000000
+      },
+      "realBacking": 151785116181659,
+      "surplus": 109692887789,
+      "inFlight": {
+        "reservedUBA": 0,
+        "redeemingUBA": 0
+      },
+      "backingVerdict": "PROVEN",
+      "collateralVerdict": "OVER_COLLATERALIZED",
+      "collateralFlags": [],
+      "verdict": "SOLVENT",
+      "caveats": [
+        "POINT-IN-TIME: verdict is pinned to the block/ledger above and decays the next ledger; re-run for a current view.",
+        "IN-FLIGHT NOT NETTED: reserved=0 + redeeming=0 UBA are in 14-day mint/redeem windows; the backing check compares live XRPL balance vs total FXRP supply without netting these (conservative but not exact).",
+        "CORE-VAULT ESCROW: 140000000000000 UBA of Core-Vault backing is XRPL Escrow (time-locked); it is counted as backing but the escrow release ladder / finish conditions are NOT verified here.",
+        "FDC TRUST: the mint side of FAssets trusts Flare's FDC attestation set for XRPL->Flare proofs; this tool re-derives balances directly from XRPL and does NOT re-verify FDC's attestations.",
+        "CR SIGNAL: LEG 1 uses the protocol's own AgentStatus (NORMAL/CCB/LIQUIDATION) as the authoritative liquidation signal and reports actual CRs; it does not fetch the per-collateral-type required min CR ('vs required %' is a getCollateralType enhancement).",
+        "AGENT SET: enumerated via getAllAgents(0,1000); if the system ever exceeds 1000 agents this must paginate (currently 6 agents)."
+      ],
+      "trustModel": {
+        "provable_trustlessly": "XRPL 1:1 backing (agent + Core-Vault balances incl. on-ledger escrow, re-derived from raw XRPL, no indexer/oracle) and agent over-collateralization status (read from Flare mainnet).",
+        "conditional_trust": "FDC attestation set (mint proofs) and the marked value / release schedule of time-locked escrow.",
+        "not_claimed": "That FXRP is safe from every economic risk; this is a solvency snapshot (backing >= supply AND no agent in liquidation), not an audit of the FAssets contracts or FDC."
+      }
+    }
+  ]
+}
