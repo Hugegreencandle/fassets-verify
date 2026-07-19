@@ -1,63 +1,104 @@
-# fassets-verify — Independent Proof-of-Reserves for the Flare FAssets system
+# fassets-verify — Independent Proof-of-Solvency for Flare FAssets (FXRP)
 
-**Flare Summer Signal — Interoperable Asset Products track.**
+**Flare Summer Signal — Interoperable Asset Products.** By Kairo Vault Technologies (合同会社), an
+independent verification company. Unaffiliated with Flare or the FAssets agents.
 
-A trustless, reproducible re-checker that re-derives *"every FAsset is backed by its real underlying"* from **raw Flare + XRPL public data**, trusting no indexer, no UI, and no protocol self-report. Read the ledgers yourself; verify the peg yourself.
+A trustless, reproducible re-checker that re-derives whether **FXRP is fully solvent** from **raw Flare
+mainnet + XRP Ledger public data** — trusting no indexer, no dashboard, and no protocol self-report. It
+spans both chains an interoperable asset actually lives on: the wrapper accounting on **Flare**, the real
+reserves on **XRPL**. Read the ledgers yourself; verify the peg yourself.
 
-**It auto-discovers every live FAsset** (via `AssetManagerController.getAssetManagers()`) and verifies each — FXRP today, and **FBTC / FDOGE automatically the moment they launch**. It ships with a self-contained `dashboard.html` (opens in any browser, no server) and a `--json` attestation.
+Auto-discovers every live FAsset via `AssetManagerController.getAssetManagers()` — FXRP today, FBTC/FDOGE
+the moment they launch.
 
-## The headline finding: the obvious reserve check is *wrong* for XRPL-escrow-backed assets
+## The two legs (SOLVENT requires both)
 
-## The problem it solves
+FXRP solvency has two independent conditions, on two chains. Most tools check at most one.
 
-FXRP is a 1:1 XRP wrapper on Flare (FAssets). Its backing lives in **two places**: a handful of agent vaults, and — for ~99% of supply — the **v1.1 Core Vault**, a governance-run XRPL multisig.
+**LEG 1 — Over-collateralization (Flare side).** Every FAsset agent must hold collateral above the
+liquidation floor. We read each agent's status from the FAssets protocol's **own liquidation state
+machine** (`AgentStatus`: NORMAL / CCB / LIQUIDATION) plus its live vault/pool collateral ratios — the
+authoritative signal, no guessed thresholds.
 
-Here's the trap: the Core Vault holds **~140M XRP in XRPL Escrow objects**, which do **not** count toward the account's `Balance`. A naive proof-of-reserves reads the Core Vault's balance (~10M), sees 150M of supply behind it, and **falsely screams "140M under-backed."** That naive check is the obvious one — and it's dangerously wrong.
-
-`fxrp-verify` reads the **actual Escrow objects on the XRP Ledger** and reconciles the full picture.
-
-## What it proves
-
-```
-FXRP.totalSupply()  ≤  Σ agents' live XRPL balance  +  Core-Vault (liquid Balance + Σ on-ledger Escrow amounts)
-```
-
-Fail-closed verdict, ledger-pinned:
-- **PROVEN** — real XRP backing ≥ circulating FXRP.
-- **FLAGGED** — under-backed (real XRP < supply).
-- **CANNOT_VERIFY** — a required read failed (never a false "safe").
-
-**Live result (mainnet):** FXRP supply ~152.08M, real XRP backing ~152.19M across 6 agents + the Core Vault (10.09M liquid + 140M escrow) → **PROVEN, ~+108k XRP surplus.** Every agent is over-reserved.
-
-## How it works (trust nothing)
-
-1. Resolve `AssetManagerFXRP` via the FlareContractRegistry; read `fAsset.totalSupply()`.
-2. `getAllAgents` → per-agent `getAgentInfo` (minted, required, and each agent's XRPL address).
-3. `getCoreVaultManager()` → `coreVaultAddress()` (the Core Vault XRPL address).
-4. For every backing address, read **live XRP on the XRP Ledger** = liquid `Balance` + the sum of that account's **Escrow objects** (`account_objects`), pinned to one validated ledger.
-5. Reconcile against `totalSupply`. Reproducible: same pinned ledger → same verdict.
-
-No indexer, no API keys, no trusted middleware — just a Flare RPC and an XRPL RPC.
-
-## Honest scope (what it does and doesn't claim)
-
-- It proves the backing XRP **exists and is on-ledger** at the pinned moment. It does **not** claim the Core Vault's custody is trustless — the Core Vault is a **custodial multisig**, and this is disclosed, not hidden.
-- It is a snapshot at a pinned ledger; production use wants a quiescent/settle-window pass to avoid in-flight noise.
-- It is independent verification (proof-of-reserves), not an on-chain oracle.
-
-## Why it's worth continuing
-
-This is the operator/holder companion FAssets doesn't ship: anyone can verify the FXRP peg from public data without trusting Flare's own dashboards. It generalizes to a recurring **verification service** — re-prove reserves each ledger, per-agent attestations, and the same pattern extends to other FAssets.
-
-## Run
+**LEG 2 — 1:1 underlying backing (XRPL side — the scarce skill).** The circulating FXRP must be backed by
+real XRP locked on the XRP Ledger. We bind `FXRP.totalSupply()` (Flare) to the **actual XRP** at each
+agent's XRPL address **and** the Core Vault — including its **on-ledger Escrow objects**.
 
 ```
-python3 -m venv .venv && .venv/bin/pip install web3 xrpl-py
-.venv/bin/python fassets_verify.py         # verify every live FAsset (auto-discovered); writes reserves.json
-.venv/bin/python fassets_verify.py --json   # machine-readable attestation (pinned ledger + all reads)
-open dashboard.html                         # self-contained visual report (embeds the latest reserves.json)
+verdict = SOLVENT  ⟺  (no agent flagged by the protocol)  AND  (real XRPL backing ≥ FXRP supply)
 ```
+Fail-closed: `SOLVENT` / `UNDER_COLLATERALIZED` / `BACKING_SHORTFALL` / `CANNOT_VERIFY` — never a false "safe."
 
-`fassets_verify.py` is the system-level tool (all FAssets). `fxrp_verify.py` is the FXRP-only variant. `dashboard.html` is regenerated from `reserves.json`.
+## The headline finding: the obvious reserve check is *wrong* here
 
-Built on the same fail-closed, reproducible-from-public-data re-checker discipline as [Ward Protocol's coverage re-checker](https://github.com/wflores9/Ward-Protocol-OS)'s `--check-uniqueness`.
+~99% of FXRP backing sits behind the v1.1 **Core Vault**, which holds **~140M XRP in XRPL Escrow objects**
+that do **not** count toward the account `Balance`. A naive proof-of-reserves reads the ~10M liquid
+balance, sees ~150M of supply, and **falsely screams "140M under-backed."** `fassets-verify` reads the
+real Escrow objects and reconciles the full picture. Reading the XRPL side correctly is the differentiator
+— Flare is EVM-native; XRPL depth is rare there.
+
+**Live result (mainnet):** FXRP ~151.7M supply; real XRP backing ~151.8M across 6 agents (all NORMAL, CR
+181–648%) + Core Vault (~9.5M liquid + 140M escrow) → **SOLVENT**, ~0.07% surplus. Pinned to one Flare
+block + one XRPL ledger; re-run at those heights and reproduce it exactly.
+
+## Honesty is a feature (the trust model ships in the output)
+
+Every verdict carries its assumptions — no green check without its scope:
+- **Provable with no trust beyond the ledgers:** the XRPL backing (agents + Core Vault incl. escrow,
+  re-derived from raw XRPL) and agent over-collateralization (from Flare mainnet).
+- **Conditional on named trust:** Flare's FDC attestation set (mint proofs); the release schedule of the
+  time-locked Core-Vault escrow.
+- **Not claimed:** that FXRP is safe from every economic risk. This is a solvency snapshot, not an audit
+  of the FAssets contracts or of FDC.
+
+Plus honest caveats in the output: point-in-time decay, in-flight mint/redeem not netted, escrow-ladder
+unverified, agent-set pagination. We never launder an unverifiable claim into a PASS.
+
+## It has teeth (it flags the bad cases, not just green-lights)
+
+`negative_test.py` proves the verifier discriminates: 7 unit cases + 4 **live-mutations of the real
+FXRP data** — drop backing 1 UBA below supply, flag one agent into liquidation, or fail an XRPL read, and
+the verdict flips off SOLVENT every time (11/11 PASS). The verifier and the test share one verdict
+definition (`fassets_lib.combine_verdict`) so they can't diverge.
+
+## Signed, anchor-ready attestation
+
+`sign_attestation.mjs` turns the verdict into an **Ed25519-signed** attestation over a domain-separated
+envelope (KVT attester `kid kvt-attester-1`), emitting `body_sha256` — the immutable value to anchor
+on-chain. `render_attestation.py` produces a self-contained public attestation page (both legs, surplus,
+per-agent CR table, Core-Vault escrow breakdown, caveats), pinned to the block/ledger.
+
+## Run it
+
+```sh
+python3 -m venv .venv && .venv/bin/pip install web3     # (or use the bundled .venv)
+.venv/bin/python fassets_verify.py --json   # dual-leg verdict, pinned, with caveats + trust model
+.venv/bin/python negative_test.py           # prove it flags the bad cases (11/11)
+.venv/bin/python render_attestation.py      # -> attestation.html (self-contained, re-derivable)
+node sign_attestation.mjs                    # -> Ed25519-signed, anchor-ready attestation
+```
+No indexer, no API keys, no trusted middleware — just a Flare RPC and an XRPL RPC. `fassets_verify.py` is
+the system-level tool (all FAssets); `fxrp_verify.py` is the FXRP-only variant.
+
+## Built during Summer Signal (evidence of new work)
+
+- **v0 (pre-program):** the XRPL-side binding — agents + Core-Vault balances incl. escrow.
+- **New this program:** LEG 1 over-collateralization (protocol-authoritative status + CRs); the combined
+  two-leg `SOLVENT` verdict; honest labeling + the trust-model block; the negative-test harness (teeth);
+  the Ed25519-signed, anchor-ready attestation; the self-contained attestation page.
+
+## Roadmap (credible path beyond the hackathon)
+
+- **Live hosted dashboard** — a GitHub Action re-runs the verifier on a schedule and publishes the
+  attestation page; a public URL with "last verified block/ledger."
+- **Continuous watcher + alerts** — solvency as a live property (not a snapshot); alert on any drop below
+  backing or an agent entering liquidation.
+- **On-chain anchor** — write each `body_sha256` to an immutable, timestamped record (tamper-evident
+  history you can't quietly restate).
+- **Every FAsset** — FBTC/FDOGE auto-covered; the same engine, no new work.
+- **Institutional / JP** — an independent, reproducible solvency layer is the bar SBI-grade counterparties
+  and post-FTX JP compliance expect — a bar no self-reported TVL clears.
+
+---
+*Independent verification, not a Flare product and not on Flare's settlement path. Numbers are
+on-chain-checkable at the pinned heights. — Kairo Vault Technologies 合同会社 · kairovault.com*
