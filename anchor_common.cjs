@@ -12,9 +12,12 @@ const sha256 = (s) => "sha256:" + createHash("sha256").update(s).digest("hex");
 
 // The exact key set sign_attestation.mjs put in `body` (the hashed subset). Anything outside this
 // (verifier/environment/anchor/signature/attested_at) is NOT part of the hash.
+// MUST stay identical to the `body` object in sign_attestation.mjs — canon() over exactly these keys
+// reproduces body_sha256. If you add/remove a signed-body field there, mirror it here.
 const BODY_KEYS = ["attestation_schema", "asset", "networks", "verdict", "backing_verdict",
-  "collateral_verdict", "total_supply_uba", "real_backing_uba", "surplus_uba", "core_vault",
-  "agents", "collateral_flags", "in_flight", "method", "trust_model"];
+  "collateral_verdict", "total_supply_uba", "real_backing_uba", "net_backing_uba", "surplus_uba",
+  "floor_read_ok", "core_vault", "agents", "collateral_flags", "collateral_unverifiable", "in_flight",
+  "method", "trust_model"];
 
 function reconstructBody(signed) {
   const body = {};

@@ -31,10 +31,13 @@ const body = {
   collateral_verdict: a.collateralVerdict, // LEG 1 (Flare over-collateralization)
   total_supply_uba: String(a.totalSupply),
   real_backing_uba: String(a.realBacking),
+  net_backing_uba: String(a.netBacking ?? a.realBacking),   // backing net of redeeming (the solvency-comparison figure)
   surplus_uba: String(a.surplus),
-  core_vault: { addr: a.coreVault.addr, liquid_drops: String(a.coreVault.liquid), escrow_drops: String(a.coreVault.escrow) },
+  floor_read_ok: a.floorReadOk,                             // false => LEG 1 unverifiable => verdict CANNOT_VERIFY (never signed as SOLVENT blind)
+  core_vault: { addr: a.coreVault.addr, liquid_drops: String(a.coreVault.liquid), escrow_drops: String(a.coreVault.escrow_to_custodian ?? a.coreVault.escrow) },
   agents: a.agents.length,
   collateral_flags: a.collateralFlags.length,
+  collateral_unverifiable: (a.collateralUnverifiable || []).length,
   in_flight: a.inFlight,
   method: "dual-leg re-derivation from raw Flare mainnet + XRPL; no indexer, oracle, or dashboard trusted",
   trust_model: a.trustModel,

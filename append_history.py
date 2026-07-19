@@ -27,8 +27,12 @@ if os.path.exists(HIST):
         try: last = json.loads(lines[-1])
         except Exception: last = None
 
-if last and last.get("flare_block") == rec["flare_block"]:
-    print(f"history: skip (same flare_block {rec['flare_block']} as last record)")
+# dedup only when the FULL pin (both chains) AND the verdict are unchanged — a same-block re-run whose
+# XRPL-side backing or verdict moved must still be recorded (LEG 2 is pinned to the XRPL ledger, not the block).
+if (last and last.get("flare_block") == rec["flare_block"]
+        and last.get("xrpl_ledger") == rec["xrpl_ledger"]
+        and last.get("verdict") == rec["verdict"]):
+    print(f"history: skip (same pin {rec['flare_block']}/{rec['xrpl_ledger']} + verdict {rec['verdict']} as last)")
 else:
     with open(HIST, "a") as f:
         f.write(json.dumps(rec) + "\n")

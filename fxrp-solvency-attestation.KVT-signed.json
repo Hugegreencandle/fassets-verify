@@ -2,31 +2,34 @@
  "attestation_schema": "kvt.fxrp-solvency-attestation.v1",
  "asset": "FXRP",
  "networks": {
-  "flare_block": 65383957,
-  "xrpl_ledger": 105693670
+  "flare_block": 65422399,
+  "xrpl_ledger": 105705399
  },
  "verdict": "SOLVENT",
  "backing_verdict": "PROVEN",
  "collateral_verdict": "OVER_COLLATERALIZED",
- "total_supply_uba": "151675803794371",
- "real_backing_uba": "151785496762164",
- "surplus_uba": "109692967793",
+ "total_supply_uba": "151678698783053",
+ "real_backing_uba": "151788500348467",
+ "net_backing_uba": "151788500348467",
+ "surplus_uba": "109801565414",
+ "floor_read_ok": true,
  "core_vault": {
   "addr": "rfkXSaCZKTg1EZzec2rLDyrWHxRVJdtVXj",
-  "liquid_drops": "9454876021789",
+  "liquid_drops": "9467095459375",
   "escrow_drops": "140000000000000"
  },
  "agents": 6,
  "collateral_flags": 0,
+ "collateral_unverifiable": 0,
  "in_flight": {
   "reservedUBA": 0,
   "redeemingUBA": 0
  },
  "method": "dual-leg re-derivation from raw Flare mainnet + XRPL; no indexer, oracle, or dashboard trusted",
  "trust_model": {
-  "provable_trustlessly": "XRPL 1:1 backing (agent + Core-Vault balances incl. on-ledger escrow, re-derived from raw XRPL, no indexer/oracle) and agent over-collateralization status (read from Flare mainnet).",
-  "conditional_trust": "FDC attestation set (mint proofs) and the marked value / release schedule of time-locked escrow.",
-  "not_claimed": "That FXRP is safe from every economic risk; this is a solvency snapshot (backing >= supply AND no agent in liquidation), not an audit of the FAssets contracts or FDC."
+  "provable_trustlessly": "XRPL 1:1 backing (agent + Core-Vault balances incl. on-ledger escrow, re-derived from raw XRPL, no indexer/oracle) and agent over-collateralization VERIFIED against the system-required floor (read from Flare mainnet); fail-closed to CANNOT_VERIFY if the floor cannot be read.",
+  "conditional_trust": "FDC attestation set (mint proofs); and the named on-chain custodian (rMLNvZR9dascY5jtCfCv3whAp8HdUSZAQ) that the Core-Vault escrows pay to and whose ENTIRE balance is attributed to FXRP backing — verified on-ledger, its honesty and full-attribution trusted.",
+  "not_claimed": "That FXRP is safe from every economic risk; this is a solvency snapshot (backing net of redeeming >= supply AND every exposed agent verifiably over its floor), not an audit of the FAssets contracts or FDC."
  },
  "verifier": {
   "name": "Dane Brown",
@@ -35,7 +38,7 @@
  },
  "environment": "Darwin 25.5.0, arm64; Node v24.14.0. Re-derived from live Flare + XRPL RPC at the pinned heights; no privileged access.",
  "anchor": {
-  "body_sha256": "sha256:03d16c49e47e43cd0194a29a2df2a6b6f69d500b779c9e78133e2ece2fc0768d",
+  "body_sha256": "sha256:c381f5525de15c6fe20be6555da7f8bd2b8df73a37678110ed66308fd9341c5a",
   "chain": "xahau",
   "memo_hint": "anchor body_sha256 + kid in a Xahau memo/Hook tx from the KVT attester account"
  },
@@ -45,7 +48,7 @@
   "ctx": "por.fxrp.solvency.v1",
   "net": "flare-mainnet+xrpl-mainnet",
   "kid": "kvt-attester-1:82187d3e78386990",
-  "sig_b64": "cdKLIvGgWwe8zEvULpKWKIwfACZ9cdB17zRpgONF6ADr5pDkwO2QYb7IPiYn3SLDrfyEzgK1bllKif2QNyXLDg=="
+  "sig_b64": "HvaThxp+Sgpd+z1FSUdYhEnJHlOQzZtQVRQ6mr8JpkPGXXGI9+pCm2pbypSx2Ms+qdWY7MOjzTHsdyl6va1jDg=="
  },
- "attested_at": "2026-07-18T23:56:16.972Z"
+ "attested_at": "2026-07-19T12:22:35.966Z"
 }

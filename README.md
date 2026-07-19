@@ -68,10 +68,25 @@ unverified, agent-set pagination. We never launder an unverifiable claim into a 
 
 ## It has teeth (it flags the bad cases, not just green-lights)
 
-`negative_test.py` proves the verifier discriminates: 7 unit cases + 4 **live-mutations of the real
-FXRP data** — drop backing 1 UBA below supply, flag one agent into liquidation, or fail an XRPL read, and
-the verdict flips off SOLVENT every time (11/11 PASS). The verifier and the test share one verdict
-definition (`fassets_lib.combine_verdict`) so they can't diverge.
+`negative_test.py` proves the verifier discriminates across **26 cases** at three layers: the two-leg
+verdict, the **derivation itself** (with a mocked XRPL: a self-returning escrow counts as backing, an
+external-destination escrow is EXCLUDED, an unreadable account fails closed; an agent below its floor or
+in liquidation is FLAGGED, an agent whose floor can't be read is UNVERIFIED), and live-mutations of the
+real FXRP data. Drop backing 1 UBA below supply, flag an agent, make one agent's floor unverifiable, or
+fail an XRPL read, and the verdict flips off SOLVENT every time. The verifier and the tests share ONE
+definition (`fassets_lib`) so they can't diverge — the derivation is tested, not just the combinator.
+
+## Adversarially hardened (fail-closed by construction)
+
+This verifier was put through a multi-lane red-team hunting for a **false SOLVENT**, and every finding was
+fixed fail-closed: agent escrows are dest-filtered to self (an escrow paying out of the system can't
+inflate backing); if the system-required collateral floor can't be read, exposed agents are marked
+UNVERIFIED and the verdict is forced to CANNOT_VERIFY (never a status-only green); a failed custodian read
+fails closed rather than counting Core-Vault escrows unfiltered; redeeming XRP is netted out of the
+solvency comparison; agent-set pagination uses the correct end-index; and `floorReadOk` +
+`collateral_unverifiable` are carried into the signed attestation so a degraded verdict can't be signed
+clean. Reserve/custodian-attribution/cross-chain-skew assumptions that are real-but-immaterial are
+disclosed in the caveats rather than hidden.
 
 ## Signed, anchor-ready attestation
 
@@ -109,7 +124,7 @@ authorizes the anchor tx.
 ```sh
 python3 -m venv .venv && .venv/bin/pip install web3     # (or use the bundled .venv)
 .venv/bin/python fassets_verify.py --json   # dual-leg verdict, pinned, with caveats + trust model
-.venv/bin/python negative_test.py           # prove it flags the bad cases (11/11)
+.venv/bin/python negative_test.py           # prove it flags the bad cases (26: verdict + derivation + live)
 .venv/bin/python render_attestation.py      # -> attestation.html (self-contained, re-derivable)
 node sign_attestation.mjs                    # -> Ed25519-signed, anchor-ready attestation
 ```
