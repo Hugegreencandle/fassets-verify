@@ -4,7 +4,11 @@
 independent verification company. Unaffiliated with Flare or the FAssets agents.
 
 **▶ Live dashboard: https://hugegreencandle.github.io/fassets-verify/** — re-derived from live Flare +
-XRPL every 6 hours, pinned to the exact block/ledger, re-checkable by anyone.
+XRPL every 6 hours, pinned to the exact block/ledger, re-checkable by anyone. The dashboard is
+bilingual (English / 日本語, auto-selected by browser locale) and shows a continuous solvency timeline.
+
+![FXRP proof-of-solvency status](https://hugegreencandle.github.io/fassets-verify/status.svg)
+*(live badge — regenerated every run from the real verdict)*
 
 A trustless, reproducible re-checker that re-derives whether **FXRP is fully solvent** from **raw Flare
 mainnet + XRP Ledger public data** — trusting no indexer, no dashboard, and no protocol self-report. It
@@ -110,7 +114,15 @@ python3 -m venv .venv && .venv/bin/pip install web3     # (or use the bundled .v
 node sign_attestation.mjs                    # -> Ed25519-signed, anchor-ready attestation
 ```
 No indexer, no API keys, no trusted middleware — just a Flare RPC and an XRPL RPC. `fassets_verify.py` is
-the system-level tool (all FAssets); `fxrp_verify.py` is the FXRP-only variant.
+the system-level tool (all FAssets); `fxrp_verify.py` is the FXRP-only variant. RPC endpoints **fail over**
+across multiple providers and `getAllAgents` **paginates**, so a single dead node or a >1000-agent system
+can't sink or silently cap a run.
+
+**One command (no local setup):**
+```sh
+make verify        # re-derive the dual-leg verdict     (make test / render / attest / all also available)
+docker build -t fxrp-verify . && docker run --rm fxrp-verify   # verify in a container, zero host deps
+```
 
 ## Built during Summer Signal (evidence of new work)
 
@@ -121,10 +133,10 @@ the system-level tool (all FAssets); `fxrp_verify.py` is the FXRP-only variant.
 
 ## Roadmap (credible path beyond the hackathon)
 
-- **Live hosted dashboard** — a GitHub Action re-runs the verifier on a schedule and publishes the
-  attestation page; a public URL with "last verified block/ledger."
-- **Continuous watcher + alerts** — solvency as a live property (not a snapshot); alert on any drop below
-  backing or an agent entering liquidation.
+- ✅ **Live hosted dashboard** *(shipped)* — a GitHub Action re-derives the verifier every 6h and publishes
+  the bilingual attestation page with the last verified block/ledger.
+- ✅ **Continuous monitoring + alerts** *(shipped)* — each run appends to `history.jsonl` and the dashboard
+  shows a solvency timeline ("SOLVENT at N/N checks"); a non-SOLVENT verdict opens a deduped GitHub issue.
 - **On-chain anchor** — write each `body_sha256` to an immutable, timestamped record (tamper-evident
   history you can't quietly restate).
 - **Every FAsset** — FBTC/FDOGE auto-covered; the same engine, no new work.

@@ -4,14 +4,32 @@ Auto-discovers EVERY live FAsset via AssetManagerController.getAssetManagers() (
 when they launch), and for each re-derives 'every unit is backed by real underlying' from raw Flare + XRPL data,
 trusting no indexer. Backing = Σ agents' LIVE underlying balance + Core Vault (liquid Balance + on-ledger Escrow objects).
 The Core Vault holds ~140M XRP in XRPL Escrow that a naive Balance check MISSES; we read the escrows. Fail-closed."""
-import json, sys, urllib.request
+import json, sys, time, urllib.request
 from web3 import Web3
-FLARE="https://flare-api.flare.network/ext/C/rpc"; XRPL="https://xrplcluster.com/"
+# Multiple RPC endpoints per chain — fail OVER on error so one dead/rate-limited node can't sink a run.
+FLARE_RPCS=["https://flare-api.flare.network/ext/C/rpc","https://rpc.ankr.com/flare","https://flare.public-rpc.com"]
+XRPL_RPCS=["https://xrplcluster.com/","https://s1.ripple.com:51234/","https://s2.ripple.com:51234/"]
 CTRL="0x097B93eEBe9b76f2611e1E7D9665a9d7Ff5280B3"
-w3=Web3(Web3.HTTPProvider(FLARE))
+def connect_flare():
+    for url in FLARE_RPCS:
+        try:
+            c=Web3(Web3.HTTPProvider(url,request_kwargs={"timeout":30}))
+            _=c.eth.block_number   # probe the endpoint before trusting it
+            return c,url
+        except Exception as e:
+            sys.stderr.write("WARN: Flare RPC %s unavailable (%s); trying next\n"%(url,str(e)[:80]))
+    raise SystemExit("FATAL: no Flare RPC endpoint reachable")
+w3,FLARE_USED=connect_flare()
 def xrpl(m,p):
-    r=urllib.request.Request(XRPL, json.dumps({"method":m,"params":[p]}).encode(), {"Content-Type":"application/json"})
-    return json.load(urllib.request.urlopen(r,timeout=30))["result"]
+    last=None
+    for url in XRPL_RPCS:
+        for _attempt in range(2):
+            try:
+                r=urllib.request.Request(url, json.dumps({"method":m,"params":[p]}).encode(), {"Content-Type":"application/json"})
+                return json.load(urllib.request.urlopen(r,timeout=30))["result"]
+            except Exception as e:
+                last="%s @ %s"%(str(e)[:70],url); time.sleep(0.5)
+    raise RuntimeError("XRPL RPC failed on all endpoints for %s: %s"%(m,last))
 def underlying_backing(addr,lidx,dest_filter=None):
     """Returns (liquid, locked, excluded). Escrows CREATED by addr are 'locked' backing — but if
     dest_filter is set, only escrows whose Destination == dest_filter count; any paying ELSEWHERE go to
@@ -63,7 +81,14 @@ for M in mgrs:
     am=w3.eth.contract(address=Web3.to_checksum_address(M),abi=AMABI)
     fa=am.functions.fAsset().call(block_identifier=blk); f=w3.eth.contract(address=Web3.to_checksum_address(fa),abi=ERC)
     sym=f.functions.symbol().call(); dec=f.functions.decimals().call(); supply=f.functions.totalSupply().call(block_identifier=blk)
-    agents,_=am.functions.getAllAgents(0,1000).call(block_identifier=blk)
+    # Paginate getAllAgents so coverage is COMPLETE even if the system exceeds one page (fail-closed: we
+    # never silently cap at 1000). The 2nd return value is the total agent count.
+    agents=[]; _start=0
+    while True:
+        _chunk,_total=am.functions.getAllAgents(_start,1000).call(block_identifier=blk)
+        agents+=list(_chunk)
+        if not _chunk or len(agents)>=int(_total): break
+        _start+=len(_chunk)
     # Required minimum CRs (liquidation floors) per collateral type. Fail-closed: unavailable => report
     # actual CRs with required=None (LEG 1 still verdicts off the authoritative AgentStatus signal).
     reqVault={}; reqPool=None; floor_read_ok=False  # token(lower)->min_bips ; pool min_bips
@@ -161,6 +186,7 @@ for M in mgrs:
         "inFlight":{"reservedUBA":inflight_reserved,"redeemingUBA":inflight_redeeming},
         "backingVerdict":backing_verdict,          # LEG 2 (XRPL 1:1 backing)
         "collateralVerdict":collateral_verdict,    # LEG 1 (Flare over-collateralization)
+        "floorReadOk":floor_read_ok,               # was the system-required CR floor read live? (LEG 1 is status-only if False)
         "collateralFlags":coll_flags,
         "verdict":overall,                         # combined
         "caveats":caveats,"trustModel":trust_model})
@@ -171,5 +197,6 @@ else:
     for a in out["assets"]:
         s=10**a["decimals"]
         print(f"\n  {a['symbol']}: supply {a['totalSupply']/s:,.2f} | real backing {a['realBacking']/s:,.2f} | surplus {a['surplus']/s:+,.2f}")
-        print(f"    {len(a['agents'])} agents + Core Vault (liquid {a['coreVault']['liquid']/1e6:,.0f} + escrow {a['coreVault']['escrow']/1e6:,.0f})")
+        _cvv=a['coreVault']; _liq=_cvv.get('liquid') or 0; _esc=_cvv.get('escrow_to_custodian') or 0
+        print(f"    {len(a['agents'])} agents + Core Vault (liquid {_liq/1e6:,.0f} + escrow {_esc/1e6:,.0f})")
         print(f"    ===== {a['verdict']} =====")

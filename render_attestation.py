@@ -9,7 +9,7 @@ Japanese-locale browsers default to 日本語 (Flare markets FXRP hard in Japan)
 identical across languages — only the human text is localized. Dynamic verifier prose (trust model +
 caveats) is translated via JA_MAP; any string without a JA entry falls back to English (honest, never a
 mistranslation)."""
-import json, sys, html, datetime
+import json, sys, os, html, datetime
 
 DATA = json.load(open("reserves.json"))
 GEN = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%SZ")
@@ -67,6 +67,44 @@ def tr(s):  # translate a dynamic verifier string (EN fallback if not in JA_MAP)
     return L(esc(s), esc(JA_MAP.get(s, s)))
 
 VERDICT_COLOR = {"SOLVENT":"#0a7","BACKING_SHORTFALL":"#c33","UNDER_COLLATERALIZED":"#c33","CANNOT_VERIFY":"#a60"}
+
+def history_block():
+    """Render the continuous-monitoring strip from history.jsonl (each 6h run appends one record). Shows
+    solvency as a LIVE property over time: an inline-SVG surplus-% sparkline + an honest 'N/N SOLVENT'
+    count. Returns '' if there is no history yet. Self-contained (inline SVG, no external chart lib)."""
+    if not os.path.exists("history.jsonl"): return ""
+    rows = []
+    for line in open("history.jsonl"):
+        line = line.strip()
+        if not line: continue
+        try: rows.append(json.loads(line))
+        except Exception: pass
+    if not rows: return ""
+    n = len(rows); solvent = sum(1 for r in rows if r.get("verdict") == "SOLVENT")
+    first = rows[0]["t"][:10]; last = rows[-1]["t"][:16].replace("T", " ")
+    pcts = [float(r.get("surplus_pct") or 0) for r in rows]
+    W, H, pad = 320, 46, 5
+    lo, hi = min(pcts), max(pcts); rng = (hi - lo) or 1.0
+    def X(i): return pad + (i * (W - 2*pad) / max(1, n - 1))
+    def Y(v): return H - pad - ((v - lo) / rng) * (H - 2*pad)
+    poly = " ".join(f"{X(i):.1f},{Y(v):.1f}" for i, v in enumerate(pcts))
+    dots = "".join(f'<circle cx="{X(i):.1f}" cy="{Y(pcts[i]):.1f}" r="2.2" fill="{"#0a7" if r.get("verdict")=="SOLVENT" else "#c33"}"/>'
+                   for i, r in enumerate(rows))
+    spark = (f'<svg width="{W}" height="{H}" viewBox="0 0 {W} {H}" class=spark preserveAspectRatio=none>'
+             f'<polyline fill=none stroke="#0a7" stroke-width=1.5 points="{poly}"/>{dots}</svg>')
+    allsolv = (solvent == n)
+    if n == 1:
+        en = f"Continuous monitoring started {first} — SOLVENT. Re-derived every 6h."
+        ja = f"{first} より継続監視を開始 — SOLVENT。6時間ごとに再導出。"
+    elif allsolv:
+        en = f"Continuously monitored — SOLVENT at all {n} checks since {first}."
+        ja = f"継続監視中 — {first} 以降、{n} 回すべての検査でSOLVENT。"
+    else:
+        en = f"Continuously monitored — {solvent}/{n} checks SOLVENT since {first}."
+        ja = f"継続監視中 — {first} 以降、{n} 回中 {solvent} 回がSOLVENT。"
+    return (f'<div class=monitor><div class=mhead>{L(en, ja)}</div>{spark}'
+            f'<div class=msub>{L(f"surplus % per check · re-derived every 6h · last checked {last}Z", f"検査ごとの余剰% · 6時間ごとに再導出 · 最終確認 {last}Z")}</div></div>')
+HIST = history_block()
 
 cards = []
 for a in DATA["assets"]:
@@ -161,11 +199,15 @@ footer{{color:#888;font-size:12px;margin-top:2rem;border-top:1px solid #e3e3e3;p
 .l-ja{{display:none}}
 body[data-lang="ja"] .l-en{{display:none}}
 body[data-lang="ja"] .l-ja{{display:inline}}
+.monitor{{border:1px solid #e3e3e3;border-radius:10px;padding:.7rem .9rem;margin:0 0 1rem;background:#fafafa}}
+.mhead{{font-weight:600;font-size:14px}}.msub{{color:#888;font-size:12px;margin-top:.2rem}}
+.spark{{display:block;margin:.4rem 0;max-width:100%;height:46px}}
 /* dark mode LAST so it overrides the light card/label colors above (source-order wins) */
 @media(prefers-color-scheme:dark){{
   body{{color:#ececec;background:#111}}
-  .asset{{background:#141414}}.leg,.honest{{background:#1b1b1b}}
-  .asset,.leg,.honest{{border-color:#3a3a3a}}
+  .asset{{background:#141414}}.leg,.honest,.monitor{{background:#1b1b1b}}
+  .asset,.leg,.honest,.monitor{{border-color:#3a3a3a}}
+  .mhead{{color:#fff}}.msub{{color:#a8a8a8}}
   h1,.leg h3,.big,.honest h3,summary{{color:#fff}}
   .meta{{color:#a8a8a8}}.sub{{color:#b4c0cf}}
   td,th{{border-color:#3a3a3a}}th{{background:#242424}}
@@ -179,6 +221,7 @@ body[data-lang="ja"] .l-ja{{display:inline}}
 <div class=meta>{L('Verified by','検証者：')} <b>Kairo Vault</b> {L('(independent, no affiliation with Flare or the FAssets agents)','（独立機関、FlareおよびFAssetsエージェントとは無関係）')} ·
 {L('generated','生成')} {GEN} · {L('pinned to','固定：')} <b>{L('Flare block','Flareブロック')} {esc(pin['flare_block'])}</b> / <b>{L('XRPL ledger','XRPL レジャー')} {esc(pin['xrpl_ledger'])}</b> ·
 {L('re-derivable: run','再現可能：')} <span class=mono>fassets_verify.py</span> {L('at these heights and reproduce this exact result.','をこれらの高さで実行すれば、この結果を完全に再現できます。')}</div>
+{HIST}
 <div class=overflow>{''.join(cards)}</div>
 <footer>{L('Independent verification, not a Flare product and not on the Flare settlement path. Both legs are re-derived from raw Flare mainnet + XRPL data with no indexer, oracle, or dashboard trusted. Numbers are on-chain-checkable at the pinned heights. This is a solvency snapshot (backing &ge; supply AND no agent in liquidation), not an audit of the FAssets contracts or of the Flare FDC. &mdash; Kairo Vault, the independent verification layer.','独立した検証であり、Flareの製品でも決済経路上のものでもありません。両レッグはインデクサー・オラクル・ダッシュボードを信頼せず、生のFlareメインネット + XRPLデータから再導出しています。数値は固定した高さでオンチェーン検証可能です。これは支払能力のスナップショット（裏付け &ge; 供給 かつ 清算中エージェントなし）であり、FAssetsコントラクトやFlareのFDCの監査ではありません。&mdash; Kairo Vault、独立した検証レイヤー。')}</footer>
 <script>{TOGGLE_JS}</script>

@@ -1,8 +1,8 @@
-<!doctype html><meta charset=utf-8><title>FXRP Proof-of-Solvency — independent, by Kairo Vault</title>
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
+<title>FXRP 支払能力の独立検証 | FXRP Proof-of-Solvency — Kairo Vault</title>
 <style>
 :root{color-scheme:light dark}
-body{font:15px/1.5 -apple-system,system-ui,sans-serif;max-width:920px;margin:2rem auto;padding:0 1rem;color:#222;background:#fff}
-@media(prefers-color-scheme:dark){body{color:#ddd;background:#111}.asset,.leg,.honest{background:#1a1a1a;border-color:#333}th{background:#222}}
+body{font:15px/1.5 -apple-system,system-ui,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;max-width:920px;margin:2rem auto;padding:0 1rem;color:#222;background:#fff}
 h1{margin:0 0 .2rem}.meta{color:#888;font-size:13px;margin-bottom:1.5rem}
 .asset{border:1px solid #e3e3e3;border-radius:12px;padding:1.2rem;margin:1rem 0;background:#fafafa}
 .verdict{color:#fff;font-weight:700;font-size:1.3rem;padding:.5rem .9rem;border-radius:8px;display:inline-block;margin-bottom:1rem}
@@ -15,44 +15,83 @@ th{background:#f0f0f0;font-weight:600}.num,.nums td:last-child{text-align:right;
 .honest{border:1px solid #e3e3e3;border-radius:10px;padding:.8rem;background:#fff;margin-top:1rem}.honest h3{margin:.1rem 0 .5rem}
 details summary{cursor:pointer;font-weight:600;margin:.5rem 0}.overflow{overflow-x:auto}
 footer{color:#888;font-size:12px;margin-top:2rem;border-top:1px solid #e3e3e3;padding-top:1rem}
-</style>
-<h1>FXRP — Independent Proof-of-Solvency</h1>
-<div class=meta>Verified by <b>Kairo Vault</b> (independent, no affiliation with Flare or the FAssets agents) ·
-generated 2026-07-19 02:23:55Z · pinned to <b>Flare block 65390527</b> / <b>XRPL ledger 105695659</b> ·
-re-derivable: run <span class=mono>fassets_verify.py</span> at these heights and reproduce this exact result.</div>
+.langbar{float:right;display:flex;gap:.3rem}.langbtn{font:600 12px/1 inherit;padding:.35rem .7rem;border:1px solid #ccc;border-radius:6px;background:#fff;color:#555;cursor:pointer}
+.langbtn.active{background:#0a7;color:#fff;border-color:#0a7}
+.l-ja{display:none}
+body[data-lang="ja"] .l-en{display:none}
+body[data-lang="ja"] .l-ja{display:inline}
+.monitor{border:1px solid #e3e3e3;border-radius:10px;padding:.7rem .9rem;margin:0 0 1rem;background:#fafafa}
+.mhead{font-weight:600;font-size:14px}.msub{color:#888;font-size:12px;margin-top:.2rem}
+.spark{display:block;margin:.4rem 0;max-width:100%;height:46px}
+/* dark mode LAST so it overrides the light card/label colors above (source-order wins) */
+@media(prefers-color-scheme:dark){
+  body{color:#ececec;background:#111}
+  .asset{background:#141414}.leg,.honest,.monitor{background:#1b1b1b}
+  .asset,.leg,.honest,.monitor{border-color:#3a3a3a}
+  .mhead{color:#fff}.msub{color:#a8a8a8}
+  h1,.leg h3,.big,.honest h3,summary{color:#fff}
+  .meta{color:#a8a8a8}.sub{color:#b4c0cf}
+  td,th{border-color:#3a3a3a}th{background:#242424}
+  .num,.nums td,.agents td{color:#ececec}
+  .tag{background:#333;color:#ddd}
+  .langbtn{background:#1a1a1a;color:#cfcfcf;border-color:#3a3a3a}
+}
+</style></head><body data-lang=en>
+<div class=langbar><button class=langbtn data-set-lang=en>EN</button><button class=langbtn data-set-lang=ja>日本語</button></div>
+<h1><span class="l-en">FXRP — Independent Proof-of-Solvency</span><span class="l-ja">FXRP — 独立した支払能力の証明</span></h1>
+<div class=meta><span class="l-en">Verified by</span><span class="l-ja">検証者：</span> <b>Kairo Vault</b> <span class="l-en">(independent, no affiliation with Flare or the FAssets agents)</span><span class="l-ja">（独立機関、FlareおよびFAssetsエージェントとは無関係）</span> ·
+<span class="l-en">generated</span><span class="l-ja">生成</span> 2026-07-19 09:24:05Z · <span class="l-en">pinned to</span><span class="l-ja">固定：</span> <b><span class="l-en">Flare block</span><span class="l-ja">Flareブロック</span> 65413168</b> / <b><span class="l-en">XRPL ledger</span><span class="l-ja">XRPL レジャー</span> 105702598</b> ·
+<span class="l-en">re-derivable: run</span><span class="l-ja">再現可能：</span> <span class=mono>fassets_verify.py</span> <span class="l-en">at these heights and reproduce this exact result.</span><span class="l-ja">をこれらの高さで実行すれば、この結果を完全に再現できます。</span></div>
+<div class=monitor><div class=mhead><span class="l-en">Continuous monitoring started 2026-07-19 — SOLVENT. Re-derived every 6h.</span><span class="l-ja">2026-07-19 より継続監視を開始 — SOLVENT。6時間ごとに再導出。</span></div><svg width="320" height="46" viewBox="0 0 320 46" class=spark preserveAspectRatio=none><polyline fill=none stroke="#0a7" stroke-width=1.5 points="5.0,41.0"/><circle cx="5.0" cy="41.0" r="2.2" fill="#0a7"/></svg><div class=msub><span class="l-en">surplus % per check · re-derived every 6h · last checked 2026-07-19 09:24Z</span><span class="l-ja">検査ごとの余剰% · 6時間ごとに再導出 · 最終確認 2026-07-19 09:24Z</span></div></div>
 <div class=overflow>
     <section class=asset>
-      <div class=verdict style="background:#0a7">FXRP — SOLVENT</div>
+      <div class=verdict style="background:#0a7">FXRP — <span class="l-en">SOLVENT</span><span class="l-ja">SOLVENT（支払能力あり）</span></div>
       <div class=legs>
-        <div class=leg><h3>Leg 1 — Over-collateralization <span class=tag>Flare</span></h3>
-          <p class=big>OVER_COLLATERALIZED</p>
-          <p class=sub>Read from the FAssets protocol's own AgentStatus (NORMAL / CCB / LIQUIDATION). 6 agents, 0 flagged.</p></div>
-        <div class=leg><h3>Leg 2 — XRPL 1:1 backing <span class=tag>XRPL</span></h3>
-          <p class=big>PROVEN</p>
-          <p class=sub>Real XRP re-derived from raw XRPL (agents + Core Vault, incl. on-ledger escrow). No indexer, no oracle.</p></div>
+        <div class=leg><h3><span class="l-en">Leg 1 — Over-collateralization</span><span class="l-ja">レッグ1 — 過剰担保</span> <span class=tag>Flare</span></h3>
+          <p class=big><span class="l-en">OVER_COLLATERALIZED</span><span class="l-ja">OVER_COLLATERALIZED（過剰担保）</span></p>
+          <p class=sub><span class="l-en">Read from the FAssets protocol's own AgentStatus (NORMAL / CCB / LIQUIDATION). 6 agents, 0 flagged.</span><span class="l-ja">FAssetsプロトコル自身のAgentStatus（NORMAL / CCB / LIQUIDATION）から読み取り。エージェント 6 件、フラグ 0 件。</span></p></div>
+        <div class=leg><h3><span class="l-en">Leg 2 — XRPL 1:1 backing</span><span class="l-ja">レッグ2 — XRPL 1:1 裏付け</span> <span class=tag>XRPL</span></h3>
+          <p class=big><span class="l-en">PROVEN</span><span class="l-ja">PROVEN（証明済み）</span></p>
+          <p class=sub><span class="l-en">Real XRP re-derived from raw XRPL (agents + Core Vault, incl. on-ledger escrow). No indexer, no oracle.</span><span class="l-ja">生のXRPLデータから再導出した実XRP（エージェント + コアボールト、オンレジャー・エスクロー含む）。インデクサーもオラクルも不使用。</span></p></div>
       </div>
       <table class=nums>
-        <tr><td>FXRP supply</td><td class=num>151,678,402.79</td></tr>
-        <tr><td>Real XRPL backing</td><td class=num>151,788,111.30</td></tr>
-        <tr><td>Surplus</td><td class=num>109,708.51 (0.072%)</td></tr>
-        <tr><td>Core Vault liquid</td><td class=num>9,455,080.01</td></tr>
-        <tr><td>Core Vault escrow → custodian <span class=mono>rMLNvZR9dascY5jtCfCv3whAp8HdUSZAQ</span> (condition-gated)</td><td class=num>140,000,000.00</td></tr>
-        <tr><td>Custodian own balance (finished-escrow landing)</td><td class=num>5.00</td></tr>
-        <tr><td>Escrow excluded (pays elsewhere, not counted)</td><td class=num>0.00</td></tr>
-        <tr><td>In-flight (reserved / redeeming, not netted)</td><td class=num>0.00 / 0.00</td></tr>
+        <tr><td><span class="l-en">FXRP supply</span><span class="l-ja">FXRP 供給量</span></td><td class=num>151,673,312.80</td></tr>
+        <tr><td><span class="l-en">Real XRPL backing</span><span class="l-ja">実XRPL裏付け</span></td><td class=num>151,783,498.20</td></tr>
+        <tr><td><span class="l-en">Surplus</span><span class="l-ja">余剰</span></td><td class=num>110,185.40 (0.073%)</td></tr>
+        <tr><td><span class="l-en">Core Vault liquid</span><span class="l-ja">コアボールト流動分</span></td><td class=num>9,458,694.56</td></tr>
+        <tr><td><span class="l-en">Core Vault escrow → custodian</span><span class="l-ja">コアボールト・エスクロー → カストディアン</span> <span class=mono>rMLNvZR9dascY5jtCfCv3whAp8HdUSZAQ</span> <span class="l-en">(condition-gated)</span><span class="l-ja">（条件付き）</span></td><td class=num>140,000,000.00</td></tr>
+        <tr><td><span class="l-en">Custodian own balance (finished-escrow landing)</span><span class="l-ja">カストディアン自身の残高（完了エスクローの着地先）</span></td><td class=num>5.00</td></tr>
+        <tr><td><span class="l-en">Escrow excluded (pays elsewhere, not counted)</span><span class="l-ja">除外エスクロー（他所宛て、非計上）</span></td><td class=num>0.00</td></tr>
+        <tr><td><span class="l-en">In-flight (reserved / redeeming, not netted)</span><span class="l-ja">処理中（予約 / 償還、ネッティングなし）</span></td><td class=num>440.00 / 0.00</td></tr>
       </table>
-      <details open><summary>Per-agent (collateral + backing)</summary>
-        <table class=agents><tr><th>XRPL underlying addr</th><th>Status</th><th>Vault CR</th><th>Pool CR</th><th>Minted</th><th>Live XRP</th><th>Collateral</th></tr><tr><td class=mono>rs6q5K4RrVbrymieYjx9TFzTW24Rv9BekL</td><td>NORMAL</td><td class=num>212.48%</td><td class=num>206.45%</td><td class=num>425,760.13</td><td class=num>425,899.58</td><td class='ok'>HEALTHY</td></tr><tr><td class=mono>rGWGTbxqmpLJ3TYGjoCFDqY9mPQ4T1GTGb</td><td>NORMAL</td><td class=num>615.56%</td><td class=num>744.77%</td><td class=num>118,730.00</td><td class=num>216,248.48</td><td class='ok'>HEALTHY</td></tr><tr><td class=mono>rGK7w4oK5x4ncCZyjYEH4QpCZSkKSMrUV2</td><td>NORMAL</td><td class=num>266.0%</td><td class=num>232.6%</td><td class=num>341,395.17</td><td class=num>347,631.66</td><td class='ok'>HEALTHY</td></tr><tr><td class=mono>rEUvL6uJ1NYqa81tGxjH6BnLCQRzqT1aR7</td><td>NORMAL</td><td class=num>200.72%</td><td class=num>287.34%</td><td class=num>453,313.07</td><td class=num>455,182.43</td><td class='ok'>HEALTHY</td></tr><tr><td class=mono>raDZBXEKsBtgcRsWjq6bg2DVRkCXknJ4Kq</td><td>NORMAL</td><td class=num>240.29%</td><td class=num>214.41%</td><td class=num>380,176.67</td><td class=num>380,327.57</td><td class='ok'>HEALTHY</td></tr><tr><td class=mono>rU3KcE1fqgn7Qm8dA3DSnefNoUnsYF31Wr</td><td>NORMAL</td><td class=num>181.14%</td><td class=num>217.69%</td><td class=num>504,320.04</td><td class=num>507,736.58</td><td class='ok'>HEALTHY</td></tr></table>
+      <details open><summary><span class="l-en">Per-agent (collateral + backing)</span><span class="l-ja">エージェント別（担保 + 裏付け）</span></summary>
+        <table class=agents><tr><th><span class="l-en">XRPL underlying addr</span><span class="l-ja">XRPL原資産アドレス</span></th><th><span class="l-en">Status</span><span class="l-ja">状態</span></th><th><span class="l-en">Vault CR</span><span class="l-ja">ボールトCR</span></th><th><span class="l-en">Pool CR</span><span class="l-ja">プールCR</span></th><th><span class="l-en">Minted</span><span class="l-ja">発行量</span></th><th><span class="l-en">Live XRP</span><span class="l-ja">実XRP</span></th><th><span class="l-en">Collateral</span><span class="l-ja">担保</span></th></tr><tr><td class=mono>rs6q5K4RrVbrymieYjx9TFzTW24Rv9BekL</td><td>NORMAL</td><td class=num>212.35%</td><td class=num>205.81%</td><td class=num>425,740.14</td><td class=num>425,879.62</td><td class='ok'>HEALTHY</td></tr><tr><td class=mono>rGWGTbxqmpLJ3TYGjoCFDqY9mPQ4T1GTGb</td><td>NORMAL</td><td class=num>486.5%</td><td class=num>587.16%</td><td class=num>149,680.00</td><td class=num>247,619.82</td><td class='ok'>HEALTHY</td></tr><tr><td class=mono>rGK7w4oK5x4ncCZyjYEH4QpCZSkKSMrUV2</td><td>NORMAL</td><td class=num>288.86%</td><td class=num>253.1%</td><td class=num>314,160.56</td><td class=num>320,435.20</td><td class='ok'>HEALTHY</td></tr><tr><td class=mono>rEUvL6uJ1NYqa81tGxjH6BnLCQRzqT1aR7</td><td>NORMAL</td><td class=num>206.22%</td><td class=num>294.47%</td><td class=num>440,913.13</td><td class=num>442,799.85</td><td class='ok'>HEALTHY</td></tr><tr><td class=mono>raDZBXEKsBtgcRsWjq6bg2DVRkCXknJ4Kq</td><td>NORMAL</td><td class=num>240.13%</td><td class=num>213.73%</td><td class=num>380,176.67</td><td class=num>380,327.57</td><td class='ok'>HEALTHY</td></tr><tr><td class=mono>rU3KcE1fqgn7Qm8dA3DSnefNoUnsYF31Wr</td><td>NORMAL</td><td class=num>181.01%</td><td class=num>216.99%</td><td class=num>504,320.04</td><td class=num>507,736.58</td><td class='ok'>HEALTHY</td></tr></table>
       </details>
       <div class=honest>
-        <h3>What this does and does not mean</h3>
-        <p><b>Provable with no trust beyond the ledgers:</b> XRPL 1:1 backing (agent + Core-Vault balances incl. on-ledger escrow, re-derived from raw XRPL, no indexer/oracle) and agent over-collateralization status (read from Flare mainnet).</p>
-        <p><b>Conditional on named trust:</b> FDC attestation set (mint proofs); and the named on-chain custodian (rMLNvZR9dascY5jtCfCv3whAp8HdUSZAQ) that the Core-Vault escrows pay to and that holds finished-escrow XRP — its holding is verified on-ledger, its honesty is trusted.</p>
-        <p><b>Not claimed:</b> That FXRP is safe from every economic risk; this is a solvency snapshot (backing &gt;= supply AND no agent in liquidation), not an audit of the FAssets contracts or FDC.</p>
-        <details><summary>Caveats (6)</summary><ul><li>POINT-IN-TIME: verdict is pinned to the block/ledger above and decays the next ledger; re-run for a current view.</li><li>IN-FLIGHT NOT NETTED: reserved=0 + redeeming=0 UBA are in 14-day mint/redeem windows; the backing check compares live XRPL balance vs total FXRP supply without netting these (conservative but not exact).</li><li>CORE-VAULT ESCROW: 140000000000000 UBA of Core-Vault backing is in XRPL Escrows — CONDITION-GATED (crypto-condition + CancelAfter, not a simple time-lock) and verified to pay ONLY the on-chain custodian rMLNvZR9dascY5jtCfCv3whAp8HdUSZAQ. Escrows paying elsewhere (0 UBA) are EXCLUDED from backing. The custodian&#x27;s own balance is included, so a FINISHED escrow stays counted. The custodian is a named, trusted holder — this binds the claim to its on-chain identity, it does not make custody trustless.</li><li>FDC TRUST: the mint side of FAssets trusts Flare&#x27;s FDC attestation set for XRPL-&gt;Flare proofs; this tool re-derives balances directly from XRPL and does NOT re-verify FDC&#x27;s attestations.</li><li>CR FLOOR: LEG 1 flags an agent if its live collateral ratio is BELOW the system-required floor (getCollateralTypes minCollateralRatioBIPS: pool 150% / vault 120%) OR the protocol&#x27;s AgentStatus is non-NORMAL. The floor check is what catches a below-floor agent that liquidation has NOT yet been triggered against (FAssets liquidation is permissionless/trigger-driven, so status alone is not sufficient).</li><li>AGENT SET: enumerated via getAllAgents(0,1000); if the system ever exceeds 1000 agents this must paginate (currently 6 agents).</li></ul></details>
+        <h3><span class="l-en">What this does and does not mean</span><span class="l-ja">本証明が意味すること・しないこと</span></h3>
+        <p><b><span class="l-en">Provable with no trust beyond the ledgers:</span><span class="l-ja">レジャー以外の信頼を要さず証明可能：</span></b> <span class="l-en">XRPL 1:1 backing (agent + Core-Vault balances incl. on-ledger escrow, re-derived from raw XRPL, no indexer/oracle) and agent over-collateralization status (read from Flare mainnet).</span><span class="l-ja">XRPL 1:1 裏付け（エージェント + コアボールト残高、オンレジャー・エスクロー含む。生のXRPLから再導出、インデクサー/オラクル不使用）およびエージェントの過剰担保状態（Flareメインネットから読み取り）。</span></p>
+        <p><b><span class="l-en">Conditional on named trust:</span><span class="l-ja">指定された信頼を前提とする：</span></b> <span class="l-en">FDC attestation set (mint proofs); and the named on-chain custodian (rMLNvZR9dascY5jtCfCv3whAp8HdUSZAQ) that the Core-Vault escrows pay to and that holds finished-escrow XRP — its holding is verified on-ledger, its honesty is trusted.</span><span class="l-ja">FDCアテステーション・セット（発行証明）、およびコアボールトのエスクローが支払い先とし、完了エスクローのXRPを保持する指定オンチェーン・カストディアン（rMLNvZR9dascY5jtCfCv3whAp8HdUSZAQ）。その保有はオンレジャーで検証済みだが、その誠実性は信頼に依存する。</span></p>
+        <p><b><span class="l-en">Not claimed:</span><span class="l-ja">主張しないこと：</span></b> <span class="l-en">That FXRP is safe from every economic risk; this is a solvency snapshot (backing &gt;= supply AND no agent in liquidation), not an audit of the FAssets contracts or FDC.</span><span class="l-ja">FXRPがあらゆる経済的リスクから安全であること。これは支払能力のスナップショット（裏付け ≥ 供給 かつ 清算中エージェントなし）であり、FAssetsコントラクトやFDCの監査ではない。</span></p>
+        <details><summary><span class="l-en">Caveats (6)</span><span class="l-ja">留意事項（6）</span></summary><ul><li><span class="l-en">POINT-IN-TIME: verdict is pinned to the block/ledger above and decays the next ledger; re-run for a current view.</span><span class="l-ja">時点固定：判定は上記のブロック/レジャーに固定され、次のレジャーで陳腐化する。現在の状況は再実行のこと。</span></li><li><span class="l-en">IN-FLIGHT NOT NETTED: reserved=440000000 + redeeming=0 UBA are in 14-day mint/redeem windows; the backing check compares live XRPL balance vs total FXRP supply without netting these (conservative but not exact).</span><span class="l-ja">IN-FLIGHT NOT NETTED: reserved=440000000 + redeeming=0 UBA are in 14-day mint/redeem windows; the backing check compares live XRPL balance vs total FXRP supply without netting these (conservative but not exact).</span></li><li><span class="l-en">CORE-VAULT ESCROW: 140000000000000 UBA of Core-Vault backing is in XRPL Escrows — CONDITION-GATED (crypto-condition + CancelAfter, not a simple time-lock) and verified to pay ONLY the on-chain custodian rMLNvZR9dascY5jtCfCv3whAp8HdUSZAQ. Escrows paying elsewhere (0 UBA) are EXCLUDED from backing. The custodian&#x27;s own balance is included, so a FINISHED escrow stays counted. The custodian is a named, trusted holder — this binds the claim to its on-chain identity, it does not make custody trustless.</span><span class="l-ja">コアボールト・エスクロー：コアボールト裏付けのうち 140000000000000 UBA はXRPLエスクロー内 — 条件付き（crypto-condition + CancelAfter、単純なタイムロックではない）で、オンチェーン・カストディアン rMLNvZR9dascY5jtCfCv3whAp8HdUSZAQ のみへの支払いを検証済み。他所宛てのエスクロー（0 UBA）は裏付けから除外。カストディアン自身の残高は含めるため、完了したエスクローも計上され続ける。カストディアンは指定された信頼される保持者であり、これは主張をそのオンチェーン識別子に結び付けるが、カストディを無信頼にするものではない。</span></li><li><span class="l-en">FDC TRUST: the mint side of FAssets trusts Flare&#x27;s FDC attestation set for XRPL-&gt;Flare proofs; this tool re-derives balances directly from XRPL and does NOT re-verify FDC&#x27;s attestations.</span><span class="l-ja">FDC信頼：FAssetsの発行側はXRPL→Flareの証明についてFlareのFDCアテステーション・セットを信頼する。本ツールは残高をXRPLから直接再導出し、FDCのアテステーションを再検証はしない。</span></li><li><span class="l-en">CR FLOOR: LEG 1 flags an agent if its live collateral ratio is BELOW the system-required floor (getCollateralTypes minCollateralRatioBIPS: pool 150% / vault 120%) OR the protocol&#x27;s AgentStatus is non-NORMAL. The floor check is what catches a below-floor agent that liquidation has NOT yet been triggered against (FAssets liquidation is permissionless/trigger-driven, so status alone is not sufficient).</span><span class="l-ja">CRフロア：レッグ1は、エージェントの実担保比率がシステム要求フロア（getCollateralTypes minCollateralRatioBIPS：プール150% / ボールト120%）を下回るか、プロトコルのAgentStatusがNORMAL以外の場合にフラグを立てる。このフロアチェックは、清算がまだトリガーされていないフロア割れエージェントを捕捉する（FAssetsの清算はパーミッションレス/トリガー駆動のため、状態だけでは不十分）。</span></li><li><span class="l-en">AGENT SET: enumerated via getAllAgents(0,1000); if the system ever exceeds 1000 agents this must paginate (currently 6 agents).</span><span class="l-ja">エージェント集合：getAllAgents(0,1000) で列挙。システムが1000エージェントを超えた場合はページングが必要（現在6エージェント）。</span></li></ul></details>
       </div>
     </section></div>
-<footer>Independent verification, not a Flare product and not on Flare's settlement path. Both legs are re-derived from raw
-Flare mainnet + XRPL data with no indexer, oracle, or dashboard trusted. Numbers are on-chain-checkable at the pinned heights.
-This is a solvency snapshot (backing &ge; supply AND no agent in liquidation), not an audit of the FAssets contracts or of Flare's FDC.
-&mdash; Kairo Vault, the independent verification layer.</footer>
+<footer><span class="l-en">Independent verification, not a Flare product and not on the Flare settlement path. Both legs are re-derived from raw Flare mainnet + XRPL data with no indexer, oracle, or dashboard trusted. Numbers are on-chain-checkable at the pinned heights. This is a solvency snapshot (backing &ge; supply AND no agent in liquidation), not an audit of the FAssets contracts or of the Flare FDC. &mdash; Kairo Vault, the independent verification layer.</span><span class="l-ja">独立した検証であり、Flareの製品でも決済経路上のものでもありません。両レッグはインデクサー・オラクル・ダッシュボードを信頼せず、生のFlareメインネット + XRPLデータから再導出しています。数値は固定した高さでオンチェーン検証可能です。これは支払能力のスナップショット（裏付け &ge; 供給 かつ 清算中エージェントなし）であり、FAssetsコントラクトやFlareのFDCの監査ではありません。&mdash; Kairo Vault、独立した検証レイヤー。</span></footer>
+<script>
+(function(){
+  function setLang(l){
+    document.body.dataset.lang = l;
+    document.documentElement.lang = l;
+    try{ localStorage.setItem('kvt-lang', l); }catch(e){}
+    var b = document.querySelectorAll('.langbtn');
+    for(var i=0;i<b.length;i++){ b[i].classList.toggle('active', b[i].getAttribute('data-set-lang')===l); }
+  }
+  var url = new URL(window.location.href);
+  var q = url.searchParams.get('lang');
+  var stored = null; try{ stored = localStorage.getItem('kvt-lang'); }catch(e){}
+  var nav = (navigator.language||'').toLowerCase().slice(0,2)==='ja' ? 'ja' : 'en';
+  var b = document.querySelectorAll('.langbtn');
+  for(var i=0;i<b.length;i++){ (function(btn){ btn.addEventListener('click', function(){ setLang(btn.getAttribute('data-set-lang')); }); })(b[i]); }
+  setLang((q==='ja'||q==='en') ? q : (stored || nav));
+})();
+</script>
+</body></html>
