@@ -1,0 +1,51 @@
+name: verify-and-publish
+# Re-derive FXRP solvency from live Flare + XRPL and publish the attestation page to GitHub Pages.
+# Runs every 6 hours (solvency is a live property, not a one-shot), on push, and on demand.
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install web3
+      - name: Re-derive FXRP solvency (Flare + XRPL) and prove it discriminates
+        run: |
+          python fassets_verify.py --json > /dev/null
+          python negative_test.py            # fail the build if the verifier ever stops flagging bad cases
+          python render_attestation.py        # -> attestation.html (pinned, self-contained)
+      - name: Assemble site
+        run: |
+          mkdir -p _site
+          cp attestation.html _site/index.html
+          cp reserves.json _site/reserves.json
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: verify
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
