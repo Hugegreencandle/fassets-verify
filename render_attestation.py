@@ -144,7 +144,6 @@ DOC = f"""<!doctype html><html lang=en><head><meta charset=utf-8><meta name=view
 <style>
 :root{{color-scheme:light dark}}
 body{{font:15px/1.5 -apple-system,system-ui,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;max-width:920px;margin:2rem auto;padding:0 1rem;color:#222;background:#fff}}
-@media(prefers-color-scheme:dark){{body{{color:#ddd;background:#111}}.asset,.leg,.honest{{background:#1a1a1a;border-color:#333}}th{{background:#222}}.langbtn{{background:#1a1a1a;color:#bbb;border-color:#333}}}}
 h1{{margin:0 0 .2rem}}.meta{{color:#888;font-size:13px;margin-bottom:1.5rem}}
 .asset{{border:1px solid #e3e3e3;border-radius:12px;padding:1.2rem;margin:1rem 0;background:#fafafa}}
 .verdict{{color:#fff;font-weight:700;font-size:1.3rem;padding:.5rem .9rem;border-radius:8px;display:inline-block;margin-bottom:1rem}}
@@ -162,6 +161,18 @@ footer{{color:#888;font-size:12px;margin-top:2rem;border-top:1px solid #e3e3e3;p
 .l-ja{{display:none}}
 body[data-lang="ja"] .l-en{{display:none}}
 body[data-lang="ja"] .l-ja{{display:inline}}
+/* dark mode LAST so it overrides the light card/label colors above (source-order wins) */
+@media(prefers-color-scheme:dark){{
+  body{{color:#ececec;background:#111}}
+  .asset{{background:#141414}}.leg,.honest{{background:#1b1b1b}}
+  .asset,.leg,.honest{{border-color:#3a3a3a}}
+  h1,.leg h3,.big,.honest h3,summary{{color:#fff}}
+  .meta{{color:#a8a8a8}}.sub{{color:#b4c0cf}}
+  td,th{{border-color:#3a3a3a}}th{{background:#242424}}
+  .num,.nums td,.agents td{{color:#ececec}}
+  .tag{{background:#333;color:#ddd}}
+  .langbtn{{background:#1a1a1a;color:#cfcfcf;border-color:#3a3a3a}}
+}}
 </style></head><body data-lang=en>
 <div class=langbar><button class=langbtn data-set-lang=en>EN</button><button class=langbtn data-set-lang=ja>日本語</button></div>
 <h1>{L('FXRP — Independent Proof-of-Solvency','FXRP — 独立した支払能力の証明')}</h1>
