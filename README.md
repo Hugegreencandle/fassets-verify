@@ -3,6 +3,9 @@
 **Flare Summer Signal — Interoperable Asset Products.** By Kairo Vault Technologies (合同会社), an
 independent verification company. Unaffiliated with Flare or the FAssets agents.
 
+**▶ Live dashboard: https://hugegreencandle.github.io/fassets-verify/** — re-derived from live Flare +
+XRPL every 6 hours, pinned to the exact block/ledger, re-checkable by anyone.
+
 A trustless, reproducible re-checker that re-derives whether **FXRP is fully solvent** from **raw Flare
 mainnet + XRP Ledger public data** — trusting no indexer, no dashboard, and no protocol self-report. It
 spans both chains an interoperable asset actually lives on: the wrapper accounting on **Flare**, the real
