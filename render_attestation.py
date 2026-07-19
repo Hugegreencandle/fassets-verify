@@ -19,7 +19,10 @@ for a in DATA["assets"]:
     v = a["verdict"]; col = VERDICT_COLOR.get(v, "#a60")
     supply = amt6(a["totalSupply"]); backing = amt6(a["realBacking"]); surplus = amt6(a["surplus"])
     surplus_pct = (int(a["surplus"]) / int(a["totalSupply"]) * 100) if int(a["totalSupply"]) else 0
-    cv = a["coreVault"]; cv_liq = amt6(cv["liquid"] or 0); cv_esc = amt6(cv["escrow"] or 0)
+    cv = a["coreVault"]; cv_liq = amt6(cv["liquid"] or 0)
+    cv_esc = amt6(cv.get("escrow_to_custodian") or cv.get("escrow") or 0)   # renamed key; fall back for old json
+    cv_cust = cv.get("custodian") or "—"; cv_cust_liq = amt6(cv.get("custodian_liquid") or 0)
+    cv_excl = amt6(cv.get("escrow_excluded") or 0)
     rows = "".join(
         f"<tr><td class=mono>{esc(g['addr'])}</td><td>{esc(g['status'])}</td>"
         f"<td class=num>{g['vaultCR_pct']}%</td><td class=num>{g['poolCR_pct']}%</td>"
@@ -45,7 +48,9 @@ for a in DATA["assets"]:
         <tr><td>Real XRPL backing</td><td class=num>{backing}</td></tr>
         <tr><td>Surplus</td><td class=num>{surplus} ({surplus_pct:.3f}%)</td></tr>
         <tr><td>Core Vault liquid</td><td class=num>{cv_liq}</td></tr>
-        <tr><td>Core Vault escrow (time-locked)</td><td class=num>{cv_esc}</td></tr>
+        <tr><td>Core Vault escrow → custodian <span class=mono>{esc(cv_cust)}</span> (condition-gated)</td><td class=num>{cv_esc}</td></tr>
+        <tr><td>Custodian own balance (finished-escrow landing)</td><td class=num>{cv_cust_liq}</td></tr>
+        <tr><td>Escrow excluded (pays elsewhere, not counted)</td><td class=num>{cv_excl}</td></tr>
         <tr><td>In-flight (reserved / redeeming, not netted)</td><td class=num>{amt6(inf.get('reservedUBA',0))} / {amt6(inf.get('redeemingUBA',0))}</td></tr>
       </table>
       <details open><summary>Per-agent (collateral + backing)</summary>
