@@ -1,14 +1,14 @@
 {
   "pinned": {
-    "flare_block": 65381499,
-    "xrpl_ledger": 105692927
+    "flare_block": 65390527,
+    "xrpl_ledger": 105695659
   },
   "assets": [
     {
       "symbol": "FXRP",
       "assetManager": "0x2a3Fe068cD92178554cabcf7c95ADf49B4B0B6A8",
       "decimals": 6,
-      "totalSupply": 151675423293870,
+      "totalSupply": 151678402791302,
       "agents": [
         {
           "vault": "0x8eA74D78A03F20597cEE115176f7f8b65271c87A",
@@ -17,26 +17,28 @@
           "live": 425899579577,
           "status": "NORMAL",
           "liquidationStart": 0,
-          "vaultCR_pct": 212.71,
-          "poolCR_pct": 206.28,
-          "mintingVaultCR_pct": 140.0,
-          "mintingPoolCR_pct": 170.0,
-          "collateral": "HEALTHY",
-          "belowMintBuffer": false
+          "vaultCR_pct": 212.48,
+          "reqVaultCR_pct": 120.0,
+          "poolCR_pct": 206.45,
+          "reqPoolCR_pct": 150.0,
+          "vaultBufferPP": 92.48,
+          "poolBufferPP": 56.45,
+          "collateral": "HEALTHY"
         },
         {
           "vault": "0x09011d2A11A40DB855Cb00B3AA5a0F5F3bd485FD",
           "addr": "rGWGTbxqmpLJ3TYGjoCFDqY9mPQ4T1GTGb",
-          "minted": 112860000000,
-          "live": 210372610216,
+          "minted": 118730000000,
+          "live": 216248480236,
           "status": "NORMAL",
           "liquidationStart": 0,
-          "vaultCR_pct": 648.25,
-          "poolCR_pct": 782.84,
-          "mintingVaultCR_pct": 140.0,
-          "mintingPoolCR_pct": 170.0,
-          "collateral": "HEALTHY",
-          "belowMintBuffer": false
+          "vaultCR_pct": 615.56,
+          "reqVaultCR_pct": 120.0,
+          "poolCR_pct": 744.77,
+          "reqPoolCR_pct": 150.0,
+          "vaultBufferPP": 495.56,
+          "poolBufferPP": 594.77,
+          "collateral": "HEALTHY"
         },
         {
           "vault": "0x0F6AB40fE44aA3AB15B8ff96Df98C6F5865F048E",
@@ -45,26 +47,28 @@
           "live": 347631660352,
           "status": "NORMAL",
           "liquidationStart": 0,
-          "vaultCR_pct": 266.28,
-          "poolCR_pct": 232.4,
-          "mintingVaultCR_pct": 140.0,
-          "mintingPoolCR_pct": 170.0,
-          "collateral": "HEALTHY",
-          "belowMintBuffer": false
+          "vaultCR_pct": 266.0,
+          "reqVaultCR_pct": 120.0,
+          "poolCR_pct": 232.6,
+          "reqPoolCR_pct": 150.0,
+          "vaultBufferPP": 146.0,
+          "poolBufferPP": 82.6,
+          "collateral": "HEALTHY"
         },
         {
           "vault": "0xA69bF2eC0eF91A29B5da634BD4958AA32BaD9fe3",
           "addr": "rEUvL6uJ1NYqa81tGxjH6BnLCQRzqT1aR7",
-          "minted": 456708063131,
-          "live": 458572661955,
+          "minted": 453313071349,
+          "live": 455182425965,
           "status": "NORMAL",
           "liquidationStart": 0,
-          "vaultCR_pct": 199.43,
-          "poolCR_pct": 284.96,
-          "mintingVaultCR_pct": 140.0,
-          "mintingPoolCR_pct": 200.0,
-          "collateral": "HEALTHY",
-          "belowMintBuffer": false
+          "vaultCR_pct": 200.72,
+          "reqVaultCR_pct": 120.0,
+          "poolCR_pct": 287.34,
+          "reqPoolCR_pct": 150.0,
+          "vaultBufferPP": 80.72,
+          "poolBufferPP": 137.34,
+          "collateral": "HEALTHY"
         },
         {
           "vault": "0x7CeC6EC27F3A0f0a37B1847E5Af3E99A7499A0bC",
@@ -73,12 +77,13 @@
           "live": 380327565585,
           "status": "NORMAL",
           "liquidationStart": 0,
-          "vaultCR_pct": 240.54,
-          "poolCR_pct": 214.23,
-          "mintingVaultCR_pct": 140.0,
-          "mintingPoolCR_pct": 170.0,
-          "collateral": "HEALTHY",
-          "belowMintBuffer": false
+          "vaultCR_pct": 240.29,
+          "reqVaultCR_pct": 120.0,
+          "poolCR_pct": 214.41,
+          "reqPoolCR_pct": 150.0,
+          "vaultBufferPP": 120.29,
+          "poolBufferPP": 64.41,
+          "collateral": "HEALTHY"
         },
         {
           "vault": "0xe56f464c23760d563dd4c73dADA05159aE71FC50",
@@ -87,21 +92,25 @@
           "live": 507736582688,
           "status": "NORMAL",
           "liquidationStart": 0,
-          "vaultCR_pct": 181.33,
-          "poolCR_pct": 217.5,
-          "mintingVaultCR_pct": 140.0,
-          "mintingPoolCR_pct": 170.0,
-          "collateral": "HEALTHY",
-          "belowMintBuffer": false
+          "vaultCR_pct": 181.14,
+          "reqVaultCR_pct": 120.0,
+          "poolCR_pct": 217.69,
+          "reqPoolCR_pct": 150.0,
+          "vaultBufferPP": 61.14,
+          "poolBufferPP": 67.69,
+          "collateral": "HEALTHY"
         }
       ],
       "coreVault": {
         "addr": "rfkXSaCZKTg1EZzec2rLDyrWHxRVJdtVXj",
-        "liquid": 9454575521286,
-        "escrow": 140000000000000
+        "liquid": 9455080010506,
+        "escrow_to_custodian": 140000000000000,
+        "escrow_excluded": 0,
+        "custodian": "rMLNvZR9dascY5jtCfCv3whAp8HdUSZAQ",
+        "custodian_liquid": 4999992
       },
-      "realBacking": 151785116181659,
-      "surplus": 109692887789,
+      "realBacking": 151788111304901,
+      "surplus": 109708513599,
       "inFlight": {
         "reservedUBA": 0,
         "redeemingUBA": 0
@@ -113,14 +122,14 @@
       "caveats": [
         "POINT-IN-TIME: verdict is pinned to the block/ledger above and decays the next ledger; re-run for a current view.",
         "IN-FLIGHT NOT NETTED: reserved=0 + redeeming=0 UBA are in 14-day mint/redeem windows; the backing check compares live XRPL balance vs total FXRP supply without netting these (conservative but not exact).",
-        "CORE-VAULT ESCROW: 140000000000000 UBA of Core-Vault backing is XRPL Escrow (time-locked); it is counted as backing but the escrow release ladder / finish conditions are NOT verified here.",
+        "CORE-VAULT ESCROW: 140000000000000 UBA of Core-Vault backing is in XRPL Escrows \u2014 CONDITION-GATED (crypto-condition + CancelAfter, not a simple time-lock) and verified to pay ONLY the on-chain custodian rMLNvZR9dascY5jtCfCv3whAp8HdUSZAQ. Escrows paying elsewhere (0 UBA) are EXCLUDED from backing. The custodian's own balance is included, so a FINISHED escrow stays counted. The custodian is a named, trusted holder \u2014 this binds the claim to its on-chain identity, it does not make custody trustless.",
         "FDC TRUST: the mint side of FAssets trusts Flare's FDC attestation set for XRPL->Flare proofs; this tool re-derives balances directly from XRPL and does NOT re-verify FDC's attestations.",
-        "CR SIGNAL: LEG 1 uses the protocol's own AgentStatus (NORMAL/CCB/LIQUIDATION) as the authoritative liquidation signal and reports actual CRs; it does not fetch the per-collateral-type required min CR ('vs required %' is a getCollateralType enhancement).",
+        "CR FLOOR: LEG 1 flags an agent if its live collateral ratio is BELOW the system-required floor (getCollateralTypes minCollateralRatioBIPS: pool 150% / vault 120%) OR the protocol's AgentStatus is non-NORMAL. The floor check is what catches a below-floor agent that liquidation has NOT yet been triggered against (FAssets liquidation is permissionless/trigger-driven, so status alone is not sufficient).",
         "AGENT SET: enumerated via getAllAgents(0,1000); if the system ever exceeds 1000 agents this must paginate (currently 6 agents)."
       ],
       "trustModel": {
         "provable_trustlessly": "XRPL 1:1 backing (agent + Core-Vault balances incl. on-ledger escrow, re-derived from raw XRPL, no indexer/oracle) and agent over-collateralization status (read from Flare mainnet).",
-        "conditional_trust": "FDC attestation set (mint proofs) and the marked value / release schedule of time-locked escrow.",
+        "conditional_trust": "FDC attestation set (mint proofs); and the named on-chain custodian (rMLNvZR9dascY5jtCfCv3whAp8HdUSZAQ) that the Core-Vault escrows pay to and that holds finished-escrow XRP \u2014 its holding is verified on-ledger, its honesty is trusted.",
         "not_claimed": "That FXRP is safe from every economic risk; this is a solvency snapshot (backing >= supply AND no agent in liquidation), not an audit of the FAssets contracts or FDC."
       }
     }

@@ -25,7 +25,12 @@ authoritative signal, no guessed thresholds.
 
 **LEG 2 — 1:1 underlying backing (XRPL side — the scarce skill).** The circulating FXRP must be backed by
 real XRP locked on the XRP Ledger. We bind `FXRP.totalSupply()` (Flare) to the **actual XRP** at each
-agent's XRPL address **and** the Core Vault — including its **on-ledger Escrow objects**.
+agent's XRPL address **and** the Core Vault — including its **on-ledger Escrow objects**. The Core-Vault
+escrows are **verified to pay the on-chain `custodianAddress()`** (not just counted by sender), any that
+pay elsewhere are **excluded**, and the custodian's own balance is included so a *finished* escrow stays
+counted — the escrow→custodian transition is backing-neutral. LEG 1 flags any agent **below the
+system-required collateral floor** (`getCollateralTypes`: pool 150% / vault 120%) even before the protocol
+triggers liquidation.
 
 ```
 verdict = SOLVENT  ⟺  (no agent flagged by the protocol)  AND  (real XRPL backing ≥ FXRP supply)
