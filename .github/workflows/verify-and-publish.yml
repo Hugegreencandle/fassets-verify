@@ -12,6 +12,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  issues: write   # open an alert issue if the verdict is ever non-SOLVENT
 
 concurrency:
   group: pages
@@ -31,6 +32,23 @@ jobs:
           python fassets_verify.py --json > /dev/null
           python negative_test.py            # fail the build if the verifier ever stops flagging bad cases
           python render_attestation.py        # -> attestation.html (pinned, self-contained)
+      - name: Alert if FXRP is ever non-SOLVENT (does NOT block the deploy — the page must show the truth)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V=$(python -c "import json;print(json.load(open('reserves.json'))['assets'][0]['verdict'])")
+          echo "live verdict: $V"
+          if [ "$V" != "SOLVENT" ]; then
+            PIN=$(python -c "import json;p=json.load(open('reserves.json'))['pinned'];print('Flare block',p['flare_block'],'· XRPL ledger',p['xrpl_ledger'])")
+            echo "::warning::FXRP verdict is $V (not SOLVENT) at $PIN"
+            # dedup: only open a new alert if none is already open
+            if [ -z "$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --label solvency-alert --json number -q '.[0].number' 2>/dev/null)" ]; then
+              gh issue create --repo "$GITHUB_REPOSITORY" --label solvency-alert \
+                --title "⚠️ FXRP independent verifier: $V" \
+                --body "The independent dual-leg verifier returned **$V** for FXRP at $PIN. Investigate before alarming (check in-flight mint/redeem windows and the Core-Vault escrow). Live dashboard: https://hugegreencandle.github.io/fassets-verify/" \
+                || echo "(issue create skipped — label may be missing; create the 'solvency-alert' label once)"
+            fi
+          fi
       - name: Assemble site
         run: |
           mkdir -p _site
