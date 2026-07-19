@@ -44,6 +44,7 @@ CVABI=[{"inputs":[],"name":"coreVaultAddress","outputs":[{"type":"string"}],"sta
 # FAssets AgentStatus enum — the protocol's OWN liquidation state machine (authoritative, no threshold guessing).
 STATUS_NAMES={0:"NORMAL",1:"CCB",2:"LIQUIDATION",3:"FULL_LIQUIDATION",4:"DESTROYING"}
 BIPS=10000  # collateral ratios are in BIPS (10000 = 100%)
+from fassets_lib import combine_verdict  # shared verdict logic (single source of truth)
 blk=w3.eth.block_number; lidx=xrpl("ledger",{"ledger_index":"validated"})["ledger_index"]
 mgrs=w3.eth.contract(address=Web3.to_checksum_address(CTRL),abi=[{"inputs":[],"name":"getAssetManagers","outputs":[{"type":"address[]"}],"stateMutability":"view","type":"function"}]).functions.getAssetManagers().call(block_identifier=blk)
 out={"pinned":{"flare_block":blk,"xrpl_ledger":lidx},"assets":[]}
@@ -98,14 +99,9 @@ for M in mgrs:
     cv=underlying_backing(cvaddr,lidx)
     if cv is None: backing_verdict="CANNOT_VERIFY"
     else: backing+=sum(cv)
-    if backing_verdict!="CANNOT_VERIFY": backing_verdict="PROVEN" if backing>=supply else "BACKING_SHORTFALL"
-    # LEG 1 system verdict: OVER_COLLATERALIZED iff the protocol flags no agent (all NORMAL, none in liquidation).
-    collateral_verdict="OVER_COLLATERALIZED" if not coll_flags else "UNDER_COLLATERALIZED"
     # OVERALL: SOLVENT requires BOTH legs — real XRPL backing >= supply AND no agent under-collateralized.
-    if backing_verdict=="CANNOT_VERIFY": overall="CANNOT_VERIFY"
-    elif backing_verdict=="PROVEN" and collateral_verdict=="OVER_COLLATERALIZED": overall="SOLVENT"
-    elif backing_verdict!="PROVEN": overall="BACKING_SHORTFALL"
-    else: overall="UNDER_COLLATERALIZED"
+    backing_verdict, collateral_verdict, overall = combine_verdict(
+        backing_verdict=="CANNOT_VERIFY", backing, supply, len(coll_flags))
     # HONEST LABELING — never ship a verdict without its assumptions (accuracy-first / xahc-prover discipline).
     cv_escrow = cv[1] if cv else 0
     caveats=[
