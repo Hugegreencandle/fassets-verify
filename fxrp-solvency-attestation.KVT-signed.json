@@ -2,20 +2,20 @@
  "attestation_schema": "kvt.fxrp-solvency-attestation.v1",
  "asset": "FXRP",
  "networks": {
-  "flare_block": 65426194,
-  "xrpl_ledger": 105706549
+  "flare_block": 65426947,
+  "xrpl_ledger": 105706783
  },
  "verdict": "SOLVENT",
  "backing_verdict": "PROVEN",
  "collateral_verdict": "OVER_COLLATERALIZED",
- "total_supply_uba": "151683127171739",
- "real_backing_uba": "151792968010323",
- "net_backing_uba": "151792968010323",
- "surplus_uba": "109840838584",
+ "total_supply_uba": "151697846100668",
+ "real_backing_uba": "151807687049244",
+ "net_backing_uba": "151807647049244",
+ "surplus_uba": "109800948576",
  "floor_read_ok": true,
  "core_vault": {
   "addr": "rfkXSaCZKTg1EZzec2rLDyrWHxRVJdtVXj",
-  "liquid_drops": "9467732951877",
+  "liquid_drops": "9482461880808",
   "escrow_drops": "140000000000000"
  },
  "agents": 6,
@@ -23,7 +23,7 @@
  "collateral_unverifiable": 0,
  "in_flight": {
   "reservedUBA": 0,
-  "redeemingUBA": 0
+  "redeemingUBA": 40000000
  },
  "method": "dual-leg re-derivation from raw Flare mainnet + XRPL; no indexer, oracle, or dashboard trusted",
  "trust_model": {
@@ -38,7 +38,7 @@
  },
  "environment": "Darwin 25.5.0, arm64; Node v24.14.0. Re-derived from live Flare + XRPL RPC at the pinned heights; no privileged access.",
  "anchor": {
-  "body_sha256": "sha256:4b4ef38e7d2a7c4d46f07af1b90de6f81373f35813e8889b3380c4ac38b1bc3c",
+  "body_sha256": "sha256:65bf4152a5299c3456ab425dfd12271be5317d5d60ecd52c30e73d355669d265",
   "chain": "xahau",
   "memo_hint": "anchor body_sha256 + kid in a Xahau memo/Hook tx from the KVT attester account"
  },
@@ -48,7 +48,7 @@
   "ctx": "por.fxrp.solvency.v1",
   "net": "flare-mainnet+xrpl-mainnet",
   "kid": "kvt-attester-1:82187d3e78386990",
-  "sig_b64": "mt7Lq2wwYBbfKK2DezPpTq74nopAxp+9yX/usZxtHW9I6/Tag1Fuc3usqbBEssm57Tif4fDI5LwjoO8yMFDoAA=="
+  "sig_b64": "3qB8NU3qLx4mb1VVdFu/ZxGM1+HW1ORh7Jp1nkBXBAa8Hy8+XGII58491ovGr8f+7Ur/qwcNyPpWCm97zIWzDg=="
  },
- "attested_at": "2026-07-19T13:41:17.914Z"
+ "attested_at": "2026-07-19T13:53:58.461Z"
 }

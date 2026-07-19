@@ -9,7 +9,7 @@ tool cannot diverge:
   (3) live-mutation of the real reserves.json — mutate the derived figures and confirm the verdict flips.
 Exit 1 on any mismatch."""
 import json, sys
-from fassets_lib import combine_verdict, underlying_backing, evaluate_agent, mark_to_market
+from fassets_lib import combine_verdict, underlying_backing, evaluate_agent, mark_to_market, fdc_health
 
 allok = True
 def check(name, got, want):
@@ -86,6 +86,18 @@ check("CR uses live prices (vault)", r2["indepVaultCR_pct"], round(2*0.999/1.09*
 # zero minted => ratio undefined (no exposure), never a divide error
 mt0 = {"mintedUBA": "0", "totalVaultCollateralWei": str(5*10**6), "totalPoolCollateralNATWei": "0"}
 check("zero minted -> vault CR None (no divide error)", mark_to_market(mt0, 1.0, 1.0, 1.0, 6)["indepVaultCR_pct"], None)
+
+print("\n== (2c) LEG 0 FDC attestation-layer health (pure) ==")
+# sample = [(round, is_finalized, root_nonzero)] newest first
+fresh_sample = [(99, True, True), (98, True, True), (97, True, True)]
+check("latest finalized round", fdc_health(100, fresh_sample)["latestFinalizedRound"], 99)
+check("fresh when latest within 3 rounds", fdc_health(100, fresh_sample)["fresh"], True)
+check("finalized-in-sample count", fdc_health(100, fresh_sample)["finalizedInSample"], 3)
+# stale: latest finalized is 5 rounds behind current => NOT fresh
+check("STALE when latest finalized too old", fdc_health(100, [(95, True, True), (94, True, True)])["fresh"], False)
+# a finalized flag with a ZERO root does not count as finalized
+check("zero root does not count as finalized", fdc_health(100, [(99, True, False)])["latestFinalizedRound"], None)
+check("no finalized rounds -> not fresh", fdc_health(100, [(99, False, False)])["fresh"], False)
 
 # ---------------------------------------------------------------------------------------------------------
 print("\n== (3) live-mutation of the REAL reserves.json ==")

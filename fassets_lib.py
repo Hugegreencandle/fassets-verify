@@ -94,6 +94,27 @@ def mark_to_market(d, xrp_usd, vault_usd, pool_usd, vault_dec, pool_dec=18):
     }
 
 
+def fdc_health(current_round, sample):
+    """PURE classification of FDC (Flare Data Connector) attestation-layer health. The FAssets MINT side
+    trusts FDC Payment attestations (XRPL->Flare proofs); FDC finalizes a Merkle root each ~90s voting round,
+    readable on-chain from the Relay (the same root FAssets' FdcVerification checks proofs against). `sample`
+    is a list of (round, is_finalized, root_nonzero) for recent rounds. Returns the latest finalized round,
+    how many rounds behind current it is, the finalization rate in the sample, and `fresh` (the attestation
+    layer is live/finalizing if the latest finalized round is within 3 rounds of current). This turns the
+    'FDC is trusted' assumption into an on-chain LIVENESS CHECK — it does NOT verify any individual mint proof."""
+    fin = [r for (r, f, nz) in sample if f and nz]
+    latest = max(fin) if fin else None
+    behind = (current_round - latest) if latest is not None else None
+    return {
+        "currentRound": current_round,
+        "latestFinalizedRound": latest,
+        "roundsBehind": behind,
+        "finalizedInSample": len(fin),
+        "sampleSize": len(sample),
+        "fresh": (behind is not None and behind <= 3),
+    }
+
+
 def combine_verdict(cannot_verify, backing, supply, coll_flag_count, coll_unverifiable_count=0):
     """Two-leg solvency verdict. SOLVENT requires BOTH legs:
       LEG 2 — real XRPL backing >= supply (backing passed here is already NET of redeeming XRP that is

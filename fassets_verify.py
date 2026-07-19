@@ -32,7 +32,7 @@ def xrpl(m,p):
     raise RuntimeError("XRPL RPC failed on all endpoints for %s: %s"%(m,last))
 # underlying_backing / evaluate_agent / combine_verdict live in fassets_lib (pure + unit-testable); the
 # xrpl() function is INJECTED into underlying_backing so the derivation can be tested with a mock.
-from fassets_lib import underlying_backing, evaluate_agent, mark_to_market, combine_verdict, STATUS_NAMES
+from fassets_lib import underlying_backing, evaluate_agent, mark_to_market, fdc_health, combine_verdict, STATUS_NAMES
 gai=json.load(open("agentinfo_abi.json")); comps=[c['name'] for c in gai[0]["outputs"][0]["components"]]
 AMABI=gai+[
  {"inputs":[],"name":"fAsset","outputs":[{"type":"address"}],"stateMutability":"view","type":"function"},
@@ -57,6 +57,36 @@ BIPS=10000  # collateral ratios are in BIPS (10000 = 100%)
 blk=w3.eth.block_number; lidx=xrpl("ledger",{"ledger_index":"validated"})["ledger_index"]
 mgrs=w3.eth.contract(address=Web3.to_checksum_address(CTRL),abi=[{"inputs":[],"name":"getAssetManagers","outputs":[{"type":"address[]"}],"stateMutability":"view","type":"function"}]).functions.getAssetManagers().call(block_identifier=blk)
 out={"pinned":{"flare_block":blk,"xrpl_ledger":lidx},"assets":[]}
+# LEG 0 (FDC HEALTH): the FAssets MINT side trusts Flare's FDC (Data Connector) attestations of XRPL payments.
+# FDC finalizes a Merkle root each ~90s voting round, readable on-chain from the Relay — the SAME root FAssets'
+# FdcVerification checks mint proofs against. We read the recent finalized FDC (protocol 200) roots and confirm
+# the attestation layer is LIVE + finalizing (freshness + rate) — turning "FDC is trusted" into a CHECKED
+# liveness signal. Fail-SOFT: unavailable => omitted, core verdict unaffected. Does NOT verify individual proofs.
+FDC_PROTOCOL_ID=200
+fdc={"available":False}
+try:
+    reg=w3.eth.contract(address=Web3.to_checksum_address("0xaD67FE66660Fb8dFE9d6b1b4240d8650e30F6019"),
+        abi=[{"inputs":[{"type":"string"}],"name":"getContractAddressByName","outputs":[{"type":"address"}],"stateMutability":"view","type":"function"}])
+    FSM=reg.functions.getContractAddressByName("FlareSystemsManager").call(block_identifier=blk)
+    RELAY=reg.functions.getContractAddressByName("Relay").call(block_identifier=blk)
+    fsm=w3.eth.contract(address=Web3.to_checksum_address(FSM),abi=[{"inputs":[],"name":"getCurrentVotingEpochId","outputs":[{"type":"uint32"}],"stateMutability":"view","type":"function"}])
+    relay=w3.eth.contract(address=Web3.to_checksum_address(RELAY),abi=[
+        {"inputs":[{"type":"uint256"},{"type":"uint256"}],"name":"merkleRoots","outputs":[{"type":"bytes32"}],"stateMutability":"view","type":"function"},
+        {"inputs":[{"type":"uint256"},{"type":"uint256"}],"name":"isFinalized","outputs":[{"type":"bool"}],"stateMutability":"view","type":"function"}])
+    cur=int(fsm.functions.getCurrentVotingEpochId().call(block_identifier=blk))
+    sample=[]; latest_root=None
+    for r in range(cur-1, cur-11, -1):   # last 10 rounds (current round not yet finalized)
+        root=relay.functions.merkleRoots(FDC_PROTOCOL_ID,r).call(block_identifier=blk)
+        fin=relay.functions.isFinalized(FDC_PROTOCOL_ID,r).call(block_identifier=blk)
+        nz=(root!=b"\x00"*32)
+        sample.append((r,fin,nz))
+        if latest_root is None and fin and nz: latest_root="0x"+root.hex()
+    h=fdc_health(cur, sample)
+    fdc={"available":True,"protocolId":FDC_PROTOCOL_ID,"relay":RELAY,"latestFinalizedRoot":latest_root,
+         "roundSeconds":90, **h}
+except Exception as _e:
+    sys.stderr.write("WARN: FDC health check unavailable (%s) — LEG 0 omitted\n"%str(_e)[:100])
+out["fdc"]=fdc
 for M in mgrs:
     am=w3.eth.contract(address=Web3.to_checksum_address(M),abi=AMABI)
     fa=am.functions.fAsset().call(block_identifier=blk); f=w3.eth.contract(address=Web3.to_checksum_address(fa),abi=ERC)
@@ -191,7 +221,8 @@ for M in mgrs:
         "AGENT ESCROWS: agent underlying escrows are counted as backing ONLY if they return to the agent's own address; any agent escrow paying elsewhere is EXCLUDED ({} UBA this run) since it would leave the system on finish (symmetric with the Core-Vault custodian binding).".format(agent_escrow_excluded),
         "CUSTODIAN ATTRIBUTION: the custodian's ENTIRE liquid balance is attributed to FXRP backing; if the custodian ever holds XRP unrelated to FXRP finished-escrow proceeds this over-counts. Its holding is verified on-ledger; the full-attribution is a trusted assumption.",
         "RESERVES INCLUDED: liquid figures use the raw XRPL account Balance, which includes each account's (unspendable) base + owner reserve — a small bounded over-count of spendable backing (~1 XRP base + ~0.2 XRP per owned object, per account).",
-        "FDC TRUST: the mint side of FAssets trusts Flare's FDC attestation set for XRPL->Flare proofs; this tool re-derives balances directly from XRPL and does NOT re-verify FDC's attestations.",
+        ("FDC (mint side): FAssets trusts Flare's FDC attestations for XRPL->Flare mint proofs. This tool now CHECKS the FDC attestation layer's liveness on-chain via the Relay — latest finalized FDC (protocol 200) Merkle root at round {}, {}/{} recent rounds finalized ({}). It reads the same root FdcVerification checks against; it does NOT verify each individual mint proof (that needs the DA-layer proof, out of scope), and LEG 2 re-derives XRPL balances directly regardless.".format(fdc.get("latestFinalizedRound"), fdc.get("finalizedInSample"), fdc.get("sampleSize"), "LIVE/fresh" if fdc.get("fresh") else "STALE") if fdc.get("available") else
+         "FDC (mint side): FAssets trusts Flare's FDC attestations for XRPL->Flare mint proofs. The on-chain FDC health check was UNAVAILABLE this run; LEG 2 still re-derives XRPL balances directly and does not depend on FDC."),
         ("CR FLOOR: LEG 1 flags an agent below the system-required floor (getCollateralTypes minCollateralRatioBIPS: "
          "pool 150% / vault 120%) OR whose AgentStatus is non-NORMAL — catching a below-floor agent liquidation has "
          "NOT yet been triggered against (FAssets liquidation is permissionless/trigger-driven, so status alone is "

@@ -108,6 +108,21 @@ def history_block():
             f'<div class=msub>{L(f"surplus % per check · re-derived every 6h · last checked {last}Z", f"検査ごとの余剰% · 6時間ごとに再導出 · 最終確認 {last}Z")}</div></div>')
 HIST = history_block()
 
+def fdc_html():
+    """LEG 0 — FDC (mint-side) attestation-layer health, read on-chain from the Relay. Turns the 'FDC is
+    trusted' assumption into a live liveness check. System-wide (rendered once). '' if unavailable."""
+    f = DATA.get("fdc", {})
+    if not f.get("available"): return ""
+    fresh = f.get("fresh"); dot = "#0a7" if fresh else "#c33"
+    rnd = f.get("latestFinalizedRound"); rb = f.get("roundsBehind")
+    fin = f.get("finalizedInSample"); ss = f.get("sampleSize"); root = f.get("latestFinalizedRoot") or ""
+    st_en = "LIVE" if fresh else "STALE"; st_ja = "稼働中" if fresh else "停滞"
+    return f"""<div class=monitor>
+      <div class=mhead><span style="color:{dot}">&#9679;</span> {L(f"FDC mint-attestation layer — {st_en} (checked on-chain via Relay)", f"FDCミント認証レイヤー — {st_ja}（Relay経由でオンチェーン検証）")}</div>
+      <p class=msub>{L(f"The FAssets mint side trusts Flare's FDC; here it is CHECKED, not assumed. Latest finalized FDC (protocol 200) Merkle root at round {rnd} ({rb} behind current), {fin}/{ss} recent rounds finalized — the same root FdcVerification checks mint proofs against. Individual mint proofs are out of scope (DA-layer).", f"FAssetsのミント側はFlareのFDCを信頼 — ここでは前提でなく検証。最新の確定FDC（プロトコル200）マークルルートはラウンド{rnd}（現在から{rb}遅れ）、直近{fin}/{ss}ラウンド確定 — FdcVerificationがミント証明を照合するのと同じルート。個別のミント証明は対象外（DAレイヤー）。")}</p>
+      <p class=mtmp><span class=mono>{esc(root[:34])}&hellip;</span></p>
+    </div>"""
+
 def mtm_html(a):
     """LEG 1.5 mark-to-market strip — the independent FTSOv2 USD re-derivation (turns the protocol's reported
     CR into a checked one). Bilingual; degrades to a one-liner if FTSOv2 was unavailable this run."""
@@ -247,6 +262,7 @@ body[data-lang="ja"] .l-ja{{display:inline}}
 {L('generated','生成')} {GEN} · {L('pinned to','固定：')} <b>{L('Flare block','Flareブロック')} {esc(pin['flare_block'])}</b> / <b>{L('XRPL ledger','XRPL レジャー')} {esc(pin['xrpl_ledger'])}</b> ·
 {L('re-derivable: run','再現可能：')} <span class=mono>fassets_verify.py</span> {L('at these heights and reproduce this exact result.','をこれらの高さで実行すれば、この結果を完全に再現できます。')}</div>
 {HIST}
+{fdc_html()}
 <div class=overflow>{''.join(cards)}</div>
 <footer>{L('Independent verification, not a Flare product and not on the Flare settlement path. Both legs are re-derived from raw Flare mainnet + XRPL data with no indexer, oracle, or dashboard trusted. Numbers are on-chain-checkable at the pinned heights. This is a solvency snapshot (backing &ge; supply AND no agent in liquidation), not an audit of the FAssets contracts or of the Flare FDC. &mdash; Kairo Vault, the independent verification layer.','独立した検証であり、Flareの製品でも決済経路上のものでもありません。両レッグはインデクサー・オラクル・ダッシュボードを信頼せず、生のFlareメインネット + XRPLデータから再導出しています。数値は固定した高さでオンチェーン検証可能です。これは支払能力のスナップショット（裏付け &ge; 供給 かつ 清算中エージェントなし）であり、FAssetsコントラクトやFlareのFDCの監査ではありません。&mdash; Kairo Vault、独立した検証レイヤー。')}</footer>
 <script>{TOGGLE_JS}</script>

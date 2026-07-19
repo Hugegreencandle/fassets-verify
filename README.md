@@ -68,6 +68,21 @@ This is the highest-value kind of Flare integration: it uses Flare's own price l
 protocol makes about itself, rather than consuming a feed superficially. Fail-soft: if FTSOv2 or a feed is
 unavailable/stale, LEG 1.5 is omitted and the core two-leg verdict is unaffected (it never gates SOLVENT).
 
+## FDC attestation-layer health — checking the *other* trusted input (LEG 0)
+
+The FAssets **mint** side trusts Flare's **FDC (Data Connector)** attestations of XRPL payments. This tool
+turns that assumption into an on-chain **liveness check**: it reads the recent finalized FDC (protocol 200)
+Merkle roots from the **Relay** — the same root FAssets' own `FdcVerification` checks mint proofs against —
+and confirms the attestation layer is live and finalizing (latest root, round, and finalization rate; stale
+if the latest finalized round falls too far behind). Live: latest FDC root finalized 2 rounds back, 9/10
+recent rounds finalized. Honest scope: this verifies the FDC consensus layer is **healthy**, not each
+individual mint proof (that needs the DA-layer proof, deliberately out of scope) — and LEG 2 re-derives XRPL
+balances directly regardless, so the solvency verdict never depends on FDC. Fail-soft like LEG 1.5.
+
+Together with the FTSOv2 mark-to-market, both of the trust model's named Flare assumptions (the price oracle
+and the data connector) are now **checked on-chain, not just trusted** — meaningful Flare integration, not
+superficial feed consumption.
+
 ## Honesty is a feature (the trust model ships in the output)
 
 Every verdict carries its assumptions — no green check without its scope:
