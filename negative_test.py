@@ -9,7 +9,7 @@ tool cannot diverge:
   (3) live-mutation of the real reserves.json — mutate the derived figures and confirm the verdict flips.
 Exit 1 on any mismatch."""
 import json, sys
-from fassets_lib import combine_verdict, underlying_backing, evaluate_agent
+from fassets_lib import combine_verdict, underlying_backing, evaluate_agent, mark_to_market
 
 allok = True
 def check(name, got, want):
@@ -71,6 +71,21 @@ check("LIQUIDATION status -> FLAGGED",           evaluate_agent(agent(status=2),
 check("liq timestamp set -> FLAGGED",            evaluate_agent(agent(liq=1), RV, RP)["collateral"], "FLAGGED")
 check("NORMAL but token not in floor map -> UNVERIFIED", evaluate_agent(agent(token="0xUNKNOWN"), RV, RP)["collateral"], "UNVERIFIED")
 check("NORMAL but floor read failed (no floors) -> UNVERIFIED", evaluate_agent(agent(), {}, None)["collateral"], "UNVERIFIED")
+
+print("\n== (2b) LEG 1.5 mark-to-market (FTSOv2 USD re-derivation, pure) ==")
+# 1 XRP minted @ $1; 2 USDT vault (6dp) @ $1 => vault CR 200%; 3 FLR pool (18dp) @ $1 => pool CR 300%
+mt = {"mintedUBA": str(10**6), "totalVaultCollateralWei": str(2*10**6), "totalPoolCollateralNATWei": str(3*10**18)}
+r = mark_to_market(mt, xrp_usd=1.0, vault_usd=1.0, pool_usd=1.0, vault_dec=6)
+check("obligation USD = minted * XRP price", r["usdObligation"], 1.0)
+check("vault collateral USD", r["usdVaultCollateral"], 2.0)
+check("independent vault CR %", r["indepVaultCR_pct"], 200.0)
+check("independent pool CR %", r["indepPoolCR_pct"], 300.0)
+# real prices scale correctly: 1 XRP @ $1.09, 2 USDT @ $0.999 => CR = 2*0.999 / 1.09 * 100
+r2 = mark_to_market(mt, xrp_usd=1.09, vault_usd=0.999, pool_usd=0.0065, vault_dec=6)
+check("CR uses live prices (vault)", r2["indepVaultCR_pct"], round(2*0.999/1.09*100, 2))
+# zero minted => ratio undefined (no exposure), never a divide error
+mt0 = {"mintedUBA": "0", "totalVaultCollateralWei": str(5*10**6), "totalPoolCollateralNATWei": "0"}
+check("zero minted -> vault CR None (no divide error)", mark_to_market(mt0, 1.0, 1.0, 1.0, 6)["indepVaultCR_pct"], None)
 
 # ---------------------------------------------------------------------------------------------------------
 print("\n== (3) live-mutation of the REAL reserves.json ==")

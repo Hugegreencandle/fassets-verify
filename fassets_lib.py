@@ -72,6 +72,28 @@ def evaluate_agent(d, reqVault, reqPool):
     }
 
 
+def mark_to_market(d, xrp_usd, vault_usd, pool_usd, vault_dec, pool_dec=18):
+    """LEG 1.5 — PURE independent mark-to-market of one agent using FTSOv2 USD prices (Flare's enshrined
+    oracle), NOT the protocol's self-reported collateral ratio. Values the agent's raw vault (USDT) + pool
+    (FLR/WNat) collateral in USD against its minted-XRP obligation in USD, and RE-DERIVES the vault/pool
+    collateral ratios so they can be cross-checked against the reported CRs. Returns None values when the
+    obligation is zero (no exposure => ratio undefined). All prices/decimals are injected so this is testable."""
+    minted_xrp = int(d["mintedUBA"]) / 1e6                       # UBA is 6dp; FXRP obligation is in XRP
+    obligation_usd = minted_xrp * xrp_usd
+    vault_usd_val = int(d["totalVaultCollateralWei"]) / 10**vault_dec * vault_usd
+    pool_usd_val = int(d["totalPoolCollateralNATWei"]) / 10**pool_dec * pool_usd
+    indep_vault_cr = (vault_usd_val / obligation_usd * 100) if obligation_usd > 0 else None
+    indep_pool_cr = (pool_usd_val / obligation_usd * 100) if obligation_usd > 0 else None
+    return {
+        "usdObligation": round(obligation_usd, 2),
+        "usdVaultCollateral": round(vault_usd_val, 2),
+        "usdPoolCollateral": round(pool_usd_val, 2),
+        "usdTotalCollateral": round(vault_usd_val + pool_usd_val, 2),
+        "indepVaultCR_pct": round(indep_vault_cr, 2) if indep_vault_cr is not None else None,
+        "indepPoolCR_pct": round(indep_pool_cr, 2) if indep_pool_cr is not None else None,
+    }
+
+
 def combine_verdict(cannot_verify, backing, supply, coll_flag_count, coll_unverifiable_count=0):
     """Two-leg solvency verdict. SOLVENT requires BOTH legs:
       LEG 2 — real XRPL backing >= supply (backing passed here is already NET of redeeming XRP that is

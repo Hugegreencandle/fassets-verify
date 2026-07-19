@@ -32,7 +32,7 @@ def xrpl(m,p):
     raise RuntimeError("XRPL RPC failed on all endpoints for %s: %s"%(m,last))
 # underlying_backing / evaluate_agent / combine_verdict live in fassets_lib (pure + unit-testable); the
 # xrpl() function is INJECTED into underlying_backing so the derivation can be tested with a mock.
-from fassets_lib import underlying_backing, evaluate_agent, combine_verdict, STATUS_NAMES
+from fassets_lib import underlying_backing, evaluate_agent, mark_to_market, combine_verdict, STATUS_NAMES
 gai=json.load(open("agentinfo_abi.json")); comps=[c['name'] for c in gai[0]["outputs"][0]["components"]]
 AMABI=gai+[
  {"inputs":[],"name":"fAsset","outputs":[{"type":"address"}],"stateMutability":"view","type":"function"},
@@ -73,14 +73,41 @@ for M in mgrs:
     # Required minimum CRs (liquidation floors) per collateral type. Fail-closed: unavailable => report
     # actual CRs with required=None (LEG 1 still verdicts off the authoritative AgentStatus signal).
     reqVault={}; reqPool=None; floor_read_ok=False  # token(lower)->min_bips ; pool min_bips
+    ftso_syms=set(); pool_sym=None; vault_sym_by_token={}; vault_dec_by_token={}; asset_sym=None
     try:
         for ct in am.functions.getCollateralTypes().call(block_identifier=blk):
-            cls=int(ct[0]); token=ct[1]; min_bips=int(ct[7])  # [0]class [1]token [7]minCollateralRatioBIPS
-            if cls==1: reqPool=min_bips
-            elif cls==2: reqVault[str(token).lower()]=min_bips
+            cls=int(ct[0]); token=ct[1]; cdec=int(ct[2]); asym=ct[5]; tsym=ct[6]; min_bips=int(ct[7])
+            if cls==1: reqPool=min_bips; pool_sym=tsym or pool_sym                 # POOL = FLR/WNat
+            elif cls==2:                                                            # VAULT collateral token(s)
+                reqVault[str(token).lower()]=min_bips
+                vault_sym_by_token[str(token).lower()]=tsym; vault_dec_by_token[str(token).lower()]=cdec
+            if tsym: ftso_syms.add(tsym)
+            if asym: asset_sym=asym                                                 # asset priced = XRP
         floor_read_ok = (reqPool is not None and len(reqVault)>0)
     except Exception as _e:
         sys.stderr.write("WARN: getCollateralTypes floor read failed (%s) — LEG 1 degrades to status-only\n" % str(_e)[:100])
+    # LEG 1.5 (MARK-TO-MARKET): resolve FTSOv2 via the Flare contract registry and read USD prices for the
+    # asset (XRP) + each collateral token's FTSO symbol, PINNED to the block. This lets us RE-DERIVE each
+    # agent's collateral ratio from raw amounts x Flare's OWN enshrined oracle — turning the protocol's
+    # self-reported CR from a trusted number into a CHECKED one. Fail-SOFT: if FTSOv2 or a feed is
+    # unavailable/stale, LEG 1.5 is omitted; it NEVER gates the core two-leg verdict.
+    ftso_ok=False; prices={}; ftso_stale=False; ftso_v2_addr=None; asset_sym=asset_sym or "XRP"
+    try:
+        reg=w3.eth.contract(address=Web3.to_checksum_address("0xaD67FE66660Fb8dFE9d6b1b4240d8650e30F6019"),
+            abi=[{"inputs":[{"type":"string"}],"name":"getContractAddressByName","outputs":[{"type":"address"}],"stateMutability":"view","type":"function"}])
+        ftso_v2_addr=reg.functions.getContractAddressByName("FtsoV2").call(block_identifier=blk)
+        f2=w3.eth.contract(address=Web3.to_checksum_address(ftso_v2_addr),
+            abi=[{"inputs":[{"type":"bytes21"}],"name":"getFeedById","outputs":[{"type":"uint256"},{"type":"int8"},{"type":"uint64"}],"stateMutability":"payable","type":"function"}])
+        btime=w3.eth.get_block(blk)["timestamp"]
+        def _feed_id(name): h="01"+name.encode().hex(); return "0x"+h+"0"*(42-len(h))
+        for _s in (set(ftso_syms)|{asset_sym}):
+            v,dd,ts=f2.functions.getFeedById(_feed_id(_s+"/USD")).call(block_identifier=blk)
+            prices[_s]=v/10**dd
+            if abs(int(btime)-int(ts))>600: ftso_stale=True                        # feed older than 10 min => stale
+        ftso_ok = (asset_sym in prices and not ftso_stale)
+    except Exception as _e:
+        sys.stderr.write("WARN: FTSOv2 mark-to-market unavailable (%s) — LEG 1.5 omitted\n" % str(_e)[:100])
+    mtm_usd_collateral=0.0; mtm_usd_obligation=0.0; mtm_divergences=[]   # LEG 1.5 system accumulators
     backing_verdict="PROVEN"; backing=0; ag=[]
     # LEG 2 (XRPL backing) + LEG 1 (Flare-side over-collateralization) computed together per agent.
     coll_flags=[]           # EXPOSED agents flagged under-collateralized (status non-NORMAL OR below a known floor)
@@ -102,6 +129,19 @@ for M in mgrs:
         else: live=b[0]+b[1]; backing+=live; agent_escrow_excluded+=b[2]
         ev=evaluate_agent(d, reqVault, reqPool)   # pure LEG-1 classification: HEALTHY / FLAGGED / UNVERIFIED
         minted=int(d["mintedUBA"])
+        # LEG 1.5: independent mark-to-market of THIS agent via FTSOv2 (recompute CR from raw amounts x oracle).
+        vtok=str(d["vaultCollateralToken"]).lower(); vsym=vault_sym_by_token.get(vtok); vdec=vault_dec_by_token.get(vtok,6)
+        if ftso_ok and vsym in prices and pool_sym in prices:
+            mtm=mark_to_market(d, prices[asset_sym], prices[vsym], prices[pool_sym], vdec)
+            ev.update(mtm)
+            if minted>0:
+                mtm_usd_collateral+=mtm["usdTotalCollateral"]; mtm_usd_obligation+=mtm["usdObligation"]
+                # cross-check: our independent vault CR vs the protocol's REPORTED vault CR — flag big divergence
+                if mtm["indepVaultCR_pct"] is not None and ev["vaultCR_pct"]:
+                    dvg=abs(mtm["indepVaultCR_pct"]-ev["vaultCR_pct"])/ev["vaultCR_pct"]
+                    if dvg>0.20:
+                        mtm_divergences.append({"vault":a,"reportedVaultCR_pct":ev["vaultCR_pct"],
+                            "indepVaultCR_pct":mtm["indepVaultCR_pct"],"divergence_pct":round(dvg*100,1)})
         # SYSTEM verdict scoped by EXPOSURE (mintedUBA>0): a zero-minted distressed agent carries no FXRP-holder
         # obligation and must not flip a fully-backed system — still surfaced per-agent below.
         if minted>0:
@@ -159,6 +199,14 @@ for M in mgrs:
          "CR FLOOR UNREAD (FAIL-CLOSED): the system-required floor read (getCollateralTypes) FAILED this run, so LEG 1 "
          "cannot verify over-collateralization; every exposed agent is marked UNVERIFIED and the verdict is forced to "
          "CANNOT_VERIFY rather than a status-only OVER_COLLATERALIZED."),
+        ("MARK-TO-MARKET (LEG 1.5): each agent's collateral ratio is INDEPENDENTLY re-derived from raw collateral "
+         "amounts (totalVaultCollateralWei/totalPoolCollateralNATWei) valued in USD via Flare's own FTSOv2 oracle "
+         "({}), vs the minted-XRP obligation — turning the protocol's SELF-REPORTED CR into a CHECKED one. Agent "
+         "collateral (USD) covers the minted obligation by {:.1f}%. {} agent(s) diverged >20% from the reported CR. "
+         "This is an ADDITIVE cross-check; it does not gate the two-leg verdict.".format(
+             ftso_v2_addr, (mtm_usd_collateral/mtm_usd_obligation*100) if mtm_usd_obligation>0 else 0, len(mtm_divergences))
+         if ftso_ok else
+         "MARK-TO-MARKET (LEG 1.5) UNAVAILABLE this run (FTSOv2 unreachable or a price feed was stale); the core two-leg verdict is unaffected."),
         "COLLATERAL SCOPE: LEG-1 flags/unverifiable are scoped to agents with mintedUBA>0 (FXRP-holder exposure); a distressed agent with zero minted FXRP owes redeemers, not holders, and is surfaced per-agent but not counted into the system verdict.",
         "CROSS-CHAIN SKEW: supply is read at the Flare block and backing at the XRPL ledger above — near-simultaneous but not identical instants; a mint/redeem completing between them is not netted (bounded by in-window volume).",
         "AGENT SET: enumerated via getAllAgents paginated by end-index (start,start+1000); complete for the current {} agents and beyond.".format(len(agents)),
@@ -180,6 +228,12 @@ for M in mgrs:
         "floorReadOk":floor_read_ok,               # was the system-required CR floor read live?
         "collateralFlags":coll_flags,
         "collateralUnverifiable":coll_unverifiable, # exposed agents whose floor couldn't be verified (forces CANNOT_VERIFY)
+        "markToMarket":{                           # LEG 1.5 — independent FTSOv2 USD valuation (additive cross-check)
+            "available":ftso_ok,"stale":ftso_stale,"ftsoV2":ftso_v2_addr,"prices_usd":prices,
+            "usdCollateral":round(mtm_usd_collateral,2),"usdObligation":round(mtm_usd_obligation,2),
+            "usdMargin":round(mtm_usd_collateral-mtm_usd_obligation,2),
+            "coverageRatio_pct":round(mtm_usd_collateral/mtm_usd_obligation*100,2) if mtm_usd_obligation>0 else None,
+            "divergences":mtm_divergences},
         "verdict":overall,                         # combined
         "caveats":caveats,"trustModel":trust_model})
 json.dump(out, open("reserves.json","w"), indent=2)

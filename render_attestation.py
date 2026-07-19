@@ -18,6 +18,8 @@ pin = DATA["pinned"]
 def esc(x): return html.escape(str(x))
 def amt6(u):  # UBA / drops (6 decimals) -> human, thousands-separated
     return f"{int(u)/1_000_000:,.2f}"
+def amt2(x):  # USD float -> thousands-separated 2dp
+    return f"{float(x):,.2f}"
 
 # --- i18n helper: emit both languages inline; CSS shows the active one -------------------------------
 def L(en, ja):
@@ -106,6 +108,26 @@ def history_block():
             f'<div class=msub>{L(f"surplus % per check · re-derived every 6h · last checked {last}Z", f"検査ごとの余剰% · 6時間ごとに再導出 · 最終確認 {last}Z")}</div></div>')
 HIST = history_block()
 
+def mtm_html(a):
+    """LEG 1.5 mark-to-market strip — the independent FTSOv2 USD re-derivation (turns the protocol's reported
+    CR into a checked one). Bilingual; degrades to a one-liner if FTSOv2 was unavailable this run."""
+    m = a.get("markToMarket", {})
+    if not m.get("available"):
+        return f'<div class=mtm><p class=sub>{L("Mark-to-market (FTSOv2): unavailable this run — the two-leg verdict is unaffected.", "時価評価（FTSOv2）：本実行では利用不可 — 2レッグ判定には影響しません。")}</p></div>'
+    cov = m.get("coverageRatio_pct") or 0; nd = len(m.get("divergences", []))
+    pr = m.get("prices_usd", {})
+    prstr = esc(" · ".join(f"{k} ${v:,.4f}" for k, v in pr.items()))
+    return f"""<div class=mtm>
+      <div class=mtmhead>{L("Mark-to-market — independent, via Flare FTSOv2 <span class=tag>Flare oracle</span>", "時価評価 — 独立、Flare FTSOv2経由 <span class=tag>Flareオラクル</span>")}</div>
+      <p class=sub>{L(f"Each agent's collateral ratio re-derived from raw amounts × Flare's own FTSOv2 oracle — the protocol's self-reported CR, independently CHECKED. Agent collateral covers the minted obligation by <b>{cov:.0f}%</b>; {nd} agent(s) diverged &gt;20% from the reported CR.", f"各エージェントの担保比率を、生の数量 × FlareのFTSOv2オラクルから再導出 — プロトコル自己申告のCRを独立に検証。エージェント担保は発行債務の<b>{cov:.0f}%</b>をカバー。{nd}件が報告CRから20%超乖離。")}</p>
+      <table class=nums>
+        <tr><td>{L("Collateral value (USD, FTSOv2)","担保評価額（USD, FTSOv2）")}</td><td class=num>${amt2(m["usdCollateral"])}</td></tr>
+        <tr><td>{L("Minted obligation (USD)","発行債務（USD）")}</td><td class=num>${amt2(m["usdObligation"])}</td></tr>
+        <tr><td>{L("Coverage","カバー率")}</td><td class=num>{cov:.1f}%</td></tr>
+      </table>
+      <p class=mtmp>{L("Prices (FTSOv2):","価格（FTSOv2）：")} {prstr}</p>
+    </div>"""
+
 cards = []
 for a in DATA["assets"]:
     v = a["verdict"]; col = VERDICT_COLOR.get(v, "#a60")
@@ -149,6 +171,7 @@ for a in DATA["assets"]:
       <details open><summary>{L('Per-agent (collateral + backing)','エージェント別（担保 + 裏付け）')}</summary>
         <table class=agents><tr><th>{L('XRPL underlying addr','XRPL原資産アドレス')}</th><th>{L('Status','状態')}</th><th>{L('Vault CR','ボールトCR')}</th><th>{L('Pool CR','プールCR')}</th><th>{L('Minted','発行量')}</th><th>{L('Live XRP','実XRP')}</th><th>{L('Collateral','担保')}</th></tr>{rows}</table>
       </details>
+      {mtm_html(a)}
       <div class=honest>
         <h3>{L('What this does and does not mean','本証明が意味すること・しないこと')}</h3>
         <p><b>{L('Provable with no trust beyond the ledgers:','レジャー以外の信頼を要さず証明可能：')}</b> {tr(tm.get('provable_trustlessly',''))}</p>
@@ -202,12 +225,14 @@ body[data-lang="ja"] .l-ja{{display:inline}}
 .monitor{{border:1px solid #e3e3e3;border-radius:10px;padding:.7rem .9rem;margin:0 0 1rem;background:#fafafa}}
 .mhead{{font-weight:600;font-size:14px}}.msub{{color:#888;font-size:12px;margin-top:.2rem}}
 .spark{{display:block;margin:.4rem 0;max-width:100%;height:46px}}
+.mtm{{border:1px solid #e3e3e3;border-radius:10px;padding:.8rem;background:#fff;margin-top:1rem}}
+.mtmhead{{font-weight:600;margin-bottom:.3rem}}.mtmp{{color:#888;font-size:12px;margin:.3rem 0 0;font-variant-numeric:tabular-nums}}
 /* dark mode LAST so it overrides the light card/label colors above (source-order wins) */
 @media(prefers-color-scheme:dark){{
   body{{color:#ececec;background:#111}}
-  .asset{{background:#141414}}.leg,.honest,.monitor{{background:#1b1b1b}}
-  .asset,.leg,.honest,.monitor{{border-color:#3a3a3a}}
-  .mhead{{color:#fff}}.msub{{color:#a8a8a8}}
+  .asset{{background:#141414}}.leg,.honest,.monitor,.mtm{{background:#1b1b1b}}
+  .asset,.leg,.honest,.monitor,.mtm{{border-color:#3a3a3a}}
+  .mhead,.mtmhead{{color:#fff}}.msub,.mtmp{{color:#a8a8a8}}
   h1,.leg h3,.big,.honest h3,summary{{color:#fff}}
   .meta{{color:#a8a8a8}}.sub{{color:#b4c0cf}}
   td,th{{border-color:#3a3a3a}}th{{background:#242424}}

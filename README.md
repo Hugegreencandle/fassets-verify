@@ -53,6 +53,21 @@ real Escrow objects and reconciles the full picture. Reading the XRPL side corre
 181–648%) + Core Vault (~9.5M liquid + 140M escrow) → **SOLVENT**, ~0.07% surplus. Pinned to one Flare
 block + one XRPL ledger; re-run at those heights and reproduce it exactly.
 
+## Mark-to-market via FTSOv2 — turning a *trusted* number into a *checked* one (LEG 1.5)
+
+The protocol reports each agent's collateral ratio. Instead of trusting that number, this tool **re-derives
+it independently**: it reads each agent's raw collateral *amounts* (`totalVaultCollateralWei` USDT +
+`totalPoolCollateralNATWei` FLR) and values them in USD using **Flare's own enshrined FTSOv2 oracle**
+(resolved live via the Flare Contract Registry, prices pinned to the block), against the minted-XRP
+obligation valued at the FTSOv2 XRP/USD feed. It then **cross-checks the independently-computed CR against
+the protocol's self-reported CR** and flags any agent that diverges >20%.
+
+Live: agent collateral marks to **~$12.06M** against a **~$2.42M** minted obligation (**~497% coverage**),
+and the independent vault CR reproduces the reported CR to ~0.1% (e.g. 212.32% vs 212.54%) — 0 divergences.
+This is the highest-value kind of Flare integration: it uses Flare's own price layer to *verify* a claim the
+protocol makes about itself, rather than consuming a feed superficially. Fail-soft: if FTSOv2 or a feed is
+unavailable/stale, LEG 1.5 is omitted and the core two-leg verdict is unaffected (it never gates SOLVENT).
+
 ## Honesty is a feature (the trust model ships in the output)
 
 Every verdict carries its assumptions — no green check without its scope:
