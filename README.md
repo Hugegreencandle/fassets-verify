@@ -76,6 +76,30 @@ envelope (KVT attester `kid kvt-attester-1`), emitting `body_sha256` — the imm
 on-chain. `render_attestation.py` produces a self-contained public attestation page (both legs, surplus,
 per-agent CR table, Core-Vault escrow breakdown, caveats), pinned to the block/ledger.
 
+## Anchor the verdict to Xahau (tamper-evident, cross-chain)
+
+The signed attestation's `body_sha256` can be **frozen on Xahau** so a verdict can't be quietly
+restated later. `anchor_submit.cjs` writes `KVT-ATTEST/1:<ctx>:<body_sha256>:<kid>` into a Xahau tx
+memo; `anchor_verify.cjs` re-fetches it, **re-derives** `body_sha256` from the attestation's own body
+fields, and requires the on-ledger hash to match — mutate one byte of the body and it reports
+`DIVERGED`. This binds a Flare+XRPL solvency fact to an immutable Xahau record: one artifact spanning
+three chains.
+
+```sh
+node anchor_submit.cjs --json fxrp-solvency-attestation.KVT-signed.json --secret <xahau-familyseed> \
+  --endpoint wss://xahau-test.net --network 21338          # 21337 for Xahau mainnet
+node anchor_verify.cjs --json fxrp-solvency-attestation.KVT-signed.json --tx <tx_hash> \
+  --endpoint wss://xahau-test.net                          # CONSISTENT (exit 0) / DIVERGED (exit 2)
+```
+
+**Testnet-verified (Xahau testnet, NetworkID 21338):** the live FXRP attestation above was anchored in
+tx `0294BEFA4FAE412C03573FAB4622966C749C9D6A8B717F6C3D8F199DD81C1004` (validated ledger 10670034);
+`anchor_verify` returns CONSISTENT against the pristine attestation and DIVERGED on a one-byte
+mutation. Mainnet anchoring pins the same hash on Xahau mainnet (pending a funded anchor account).
+The anchor freezes the *hash*; proof *validity* still comes from re-deriving `fassets_verify.py` at the
+pinned heights. Two keys, two roles: the Ed25519 attester key signs the verdict, the Xahau account key
+authorizes the anchor tx.
+
 ## Run it
 
 ```sh

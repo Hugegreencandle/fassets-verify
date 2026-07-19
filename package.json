@@ -1,0 +1,25 @@
+{
+  "name": "fxrp-proof-of-reserves",
+  "version": "1.0.0",
+  "description": "**Flare Summer Signal — Interoperable Asset Products.** By Kairo Vault Technologies (合同会社), an independent verification company. Unaffiliated with Flare or the FAssets agents.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hugegreencandle/fassets-verify.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Hugegreencandle/fassets-verify/issues"
+  },
+  "homepage": "https://github.com/Hugegreencandle/fassets-verify#readme",
+  "dependencies": {
+    "xrpl-accountlib": "^9.2.0",
+    "xrpl-client": "^2.4.0"
+  }
+}
