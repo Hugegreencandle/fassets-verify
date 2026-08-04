@@ -47,6 +47,10 @@ def xrpl_ledger_index():
     """Validated ledger index. Some nodes put it at result.ledger_index, others only inside
     result.ledger, so accept either rather than assuming one shape."""
     r=xrpl("ledger",{"ledger_index":"validated"})
+    # The pin is only meaningful if the ledger really is validated, so check rather than assume.
+    # A node that answers a "validated" request with an unvalidated ledger must not silently pin it.
+    if r.get("validated") is not True:
+        raise RuntimeError("node did not confirm the ledger is validated (validated=%r)"%r.get("validated"))
     v=r.get("ledger_index") or (r.get("ledger") or {}).get("ledger_index")
     if v is None:
         raise RuntimeError("validated ledger response carried no ledger_index: keys=%s"%sorted(r.keys()))
