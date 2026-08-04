@@ -21,15 +21,36 @@ def connect_flare():
     raise SystemExit("FATAL: no Flare RPC endpoint reachable")
 w3,FLARE_USED=connect_flare()
 def xrpl(m,p):
+    # An XRPL node can answer HTTP 200 with a JSON *error* payload (rate limiting from CI IPs is the
+    # common one). Returning that as if it were data made the caller KeyError on a missing field and,
+    # worse, meant the failover below never engaged: only transport exceptions were being caught. A
+    # verifier that reads an error response as data is fail-open, so error payloads now raise and the
+    # next endpoint is tried. Broke the scheduled run 2026-08-01 -> 2026-08-04.
     last=None
     for url in XRPL_RPCS:
         for _attempt in range(2):
             try:
-                r=urllib.request.Request(url, json.dumps({"method":m,"params":[p]}).encode(), {"Content-Type":"application/json"})
-                return json.load(urllib.request.urlopen(r,timeout=30))["result"]
+                r=urllib.request.Request(url, json.dumps({"method":m,"params":[p]}).encode(),
+                                         {"Content-Type":"application/json","User-Agent":"fassets-verify"})
+                body=json.load(urllib.request.urlopen(r,timeout=30))
+                res=body.get("result")
+                if not isinstance(res,dict):
+                    raise RuntimeError("no result object in response")
+                if res.get("status")=="error" or res.get("error"):
+                    raise RuntimeError("node returned error: %s"%(res.get("error_message") or res.get("error")))
+                return res
             except Exception as e:
                 last="%s @ %s"%(str(e)[:70],url); time.sleep(0.5)
     raise RuntimeError("XRPL RPC failed on all endpoints for %s: %s"%(m,last))
+
+def xrpl_ledger_index():
+    """Validated ledger index. Some nodes put it at result.ledger_index, others only inside
+    result.ledger, so accept either rather than assuming one shape."""
+    r=xrpl("ledger",{"ledger_index":"validated"})
+    v=r.get("ledger_index") or (r.get("ledger") or {}).get("ledger_index")
+    if v is None:
+        raise RuntimeError("validated ledger response carried no ledger_index: keys=%s"%sorted(r.keys()))
+    return int(v)
 # underlying_backing / evaluate_agent / combine_verdict live in fassets_lib (pure + unit-testable); the
 # xrpl() function is INJECTED into underlying_backing so the derivation can be tested with a mock.
 from fassets_lib import underlying_backing, evaluate_agent, mark_to_market, fdc_health, combine_verdict, STATUS_NAMES
@@ -54,7 +75,7 @@ ERC=[{"inputs":[],"name":"symbol","outputs":[{"type":"string"}],"stateMutability
 CVABI=[{"inputs":[],"name":"coreVaultAddress","outputs":[{"type":"string"}],"stateMutability":"view","type":"function"},
  {"inputs":[],"name":"custodianAddress","outputs":[{"type":"string"}],"stateMutability":"view","type":"function"}]
 BIPS=10000  # collateral ratios are in BIPS (10000 = 100%)
-blk=w3.eth.block_number; lidx=xrpl("ledger",{"ledger_index":"validated"})["ledger_index"]
+blk=w3.eth.block_number; lidx=xrpl_ledger_index()
 mgrs=w3.eth.contract(address=Web3.to_checksum_address(CTRL),abi=[{"inputs":[],"name":"getAssetManagers","outputs":[{"type":"address[]"}],"stateMutability":"view","type":"function"}]).functions.getAssetManagers().call(block_identifier=blk)
 out={"pinned":{"flare_block":blk,"xrpl_ledger":lidx},"assets":[]}
 # LEG 0 (FDC HEALTH): the FAssets MINT side trusts Flare's FDC (Data Connector) attestations of XRPL payments.
